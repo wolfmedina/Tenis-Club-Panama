@@ -22,6 +22,25 @@ import { formatHour12, isSlotAvailable } from '../../../utils/tennisLogic';
 import { HeaderBar } from '../../HeaderBar';
 import { CourtScene, PlayerAvatar } from '../../VisualAssets';
 
+const getCommunityMatchPhoto = (modalidad: Modality, destacado?: boolean) => {
+  if (modalidad === 'Individual') {
+    return {
+      src: '/assets/photos/comunidad/partido_03.webp',
+      alt: 'Jugador en acción durante partido abierto de tenis',
+    };
+  }
+  if (destacado || modalidad === 'Dobles') {
+    return {
+      src: '/assets/photos/comunidad/partido_02.webp',
+      alt: 'Grupo de cuatro jugadores de dobles en cancha',
+    };
+  }
+  return {
+    src: '/assets/photos/comunidad/partido_01.webp',
+    alt: 'Jugadores celebrando encuentro deportivo en comunidad',
+  };
+};
+
 interface CommunityViewProps {
   preselectedReservaForConvocatoria?: string | null;
   onClearPreselectedReserva: () => void;
@@ -208,6 +227,7 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
   return (
     <div className="flex flex-col min-h-full bg-[#F4F6F9]">
       <HeaderBar
+        variant="net"
         onBack={subTab === 'planificacion' ? () => setSubTab('abiertos') : undefined}
         onOpenMenu={onOpenMenu}
         onOpenNotifications={onOpenNotifications}
@@ -272,37 +292,90 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
       </HeaderBar>
 
       <div className="flex-1 p-4 space-y-4 pb-8">
-        {/* Two primary unequivocal actions */}
+        {/* Two primary unequivocal actions with community photography */}
         <div className="grid grid-cols-2 gap-2.5">
           <button
             type="button"
             onClick={() => setShowCreateConvModal(true)}
-            className="rounded-2xl bg-white p-3 shadow-sm border border-slate-100 text-left hover:border-[#ACD638] transition cursor-pointer"
+            className="group rounded-2xl bg-white shadow-sm border border-slate-100 text-left hover:border-[#ACD638] transition overflow-hidden flex flex-col cursor-pointer"
           >
-            <span className="block text-xs font-extrabold text-[#273758]">
-              Tengo cancha reservada
-            </span>
-            <span className="block text-[10.5px] text-slate-500 mt-0.5">
-              Publica convocatoria sobre reserva
-            </span>
+            <div className="relative h-20 w-full overflow-hidden bg-[#172442]">
+              <img
+                src="/assets/photos/comunidad/partido_03.webp"
+                alt="Jugador de tenis en acción para convocatoria abierta"
+                decoding="async"
+                className="w-full h-full object-cover object-top group-hover:scale-[1.03] transition-transform duration-300"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#131F3A]/85 via-[#131F3A]/20 to-transparent" />
+              <span className="absolute bottom-1.5 left-2.5 text-[9.5px] font-extrabold tracking-wider text-[#B6E22E] uppercase">
+                Convocatoria
+              </span>
+            </div>
+            <div className="p-2.5 flex-1">
+              <span className="block text-xs font-extrabold text-[#1E2B45] leading-snug">
+                Tengo cancha reservada
+              </span>
+              <span className="block text-[10.5px] text-slate-500 mt-0.5 leading-snug">
+                Publica convocatoria sobre reserva
+              </span>
+            </div>
           </button>
+
           <button
             type="button"
             onClick={() => setShowCreatePlanModal(true)}
-            className="rounded-2xl bg-white p-3 shadow-sm border border-slate-100 text-left hover:border-[#ACD638] transition cursor-pointer"
+            className="group rounded-2xl bg-white shadow-sm border border-slate-100 text-left hover:border-[#ACD638] transition overflow-hidden flex flex-col cursor-pointer"
           >
-            <span className="block text-xs font-extrabold text-[#273758]">
-              Planificar un partido
-            </span>
-            <span className="block text-[10.5px] text-slate-500 mt-0.5">
-              Vota horarios sin pagar previo
-            </span>
+            <div className="relative h-20 w-full overflow-hidden bg-[#172442]">
+              <img
+                src="/assets/photos/comunidad/partido_01.webp"
+                alt="Jugadores celebrando para planificar partido en grupo"
+                decoding="async"
+                className="w-full h-full object-cover object-top group-hover:scale-[1.03] transition-transform duration-300"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#131F3A]/85 via-[#131F3A]/20 to-transparent" />
+              <span className="absolute bottom-1.5 left-2.5 text-[9.5px] font-extrabold tracking-wider text-[#B6E22E] uppercase">
+                En grupo
+              </span>
+            </div>
+            <div className="p-2.5 flex-1">
+              <span className="block text-xs font-extrabold text-[#1E2B45] leading-snug">
+                Planificar un partido
+              </span>
+              <span className="block text-[10.5px] text-slate-500 mt-0.5 leading-snug">
+                Vota horarios sin pagar previo
+              </span>
+            </div>
           </button>
         </div>
 
         {subTab === 'planificacion' && activePlan ? (
           /* 06_Planificacion_Grupal View */
           <div className="space-y-3.5">
+            {/* Group Planning Visual Banner */}
+            <div className="rounded-2xl overflow-hidden bg-[#172442] text-white shadow-sm relative min-h-[104px] flex items-stretch">
+              <div className="w-[58%] p-3.5 z-10 flex flex-col justify-center">
+                <span className="text-[10px] font-extrabold tracking-wider text-[#B6E22E] uppercase">
+                  Coordinación en equipo
+                </span>
+                <h2 className="mt-0.5 text-base font-extrabold leading-tight">
+                  Planificación grupal
+                </h2>
+                <p className="mt-1 text-[11px] text-white/85 leading-snug">
+                  Voten fecha y horario juntos antes de reservar cancha.
+                </p>
+              </div>
+              <div className="w-[48%] -ml-6 relative overflow-hidden shrink-0">
+                <img
+                  src="/assets/photos/comunidad/partido_02.webp"
+                  alt="Cuatro jugadores de tenis posando juntos en cancha"
+                  decoding="async"
+                  className="w-full h-full object-cover object-top"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#172442] via-[#172442]/40 to-transparent" />
+              </div>
+            </div>
+
             {state.planificaciones.length > 1 && (
               <div className="flex gap-2 overflow-x-auto no-scrollbar">
                 {state.planificaciones.map((p) => (
@@ -344,7 +417,18 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                 className="w-[42%] -ml-3 relative"
                 style={{ clipPath: 'polygon(18% 0, 100% 0, 100% 100%, 0% 100%)' }}
               >
-                <CourtScene variant="night-club" clubLabel="TENIS CLUB PANAMÁ" />
+                <CourtScene
+                  sedeId={winningOption?.sedeId || 'sede_tcp'}
+                  isPublic={
+                    state.sedes.find((s) => s.id === winningOption?.sedeId)?.tipo === 'Pública'
+                  }
+                  variant="night-club"
+                  clubLabel={
+                    state.sedes.find((s) => s.id === winningOption?.sedeId)?.nombre ||
+                    'Tenis Club Panamá'
+                  }
+                  eager
+                />
               </div>
             </div>
 
@@ -533,16 +617,24 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
               ) : (
                 <>
                   <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {activePlan.mensajes.map((m) => (
-                      <div key={m.id} className="flex items-start gap-2">
-                        <PlayerAvatar nombre={m.autorNombre} size="xs" />
-                        <div className="rounded-xl bg-[#F4F6F9] px-3 py-1.5 text-xs flex-1">
-                          <span className="font-bold text-[#1E2B45]">{m.autorNombre}</span>{' '}
-                          <span className="text-[10px] text-slate-400">· {m.hora}</span>
-                          <p className="text-slate-700 mt-0.5">{m.texto}</p>
+                    {activePlan.mensajes.map((m) => {
+                      const msgUser = state.usuarios.find((usr) => usr.id === m.autorId);
+                      return (
+                        <div key={m.id} className="flex items-start gap-2">
+                          <PlayerAvatar
+                            nombre={m.autorNombre}
+                            seed={msgUser?.avatarSeed}
+                            avatarUrl={msgUser?.avatarUrl}
+                            size="xs"
+                          />
+                          <div className="rounded-xl bg-[#F4F6F9] px-3 py-1.5 text-xs flex-1">
+                            <span className="font-bold text-[#1E2B45]">{m.autorNombre}</span>{' '}
+                            <span className="text-[10px] text-slate-400">· {m.hora}</span>
+                            <p className="text-slate-700 mt-0.5">{m.texto}</p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   <form
                     onSubmit={(e) => {
@@ -595,13 +687,42 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
             )}
           </div>
         ) : (
-          /* 05_Comunidad_Partidos_Abiertos View */
+          /* 05_Comunidad_Partidos_Abiertos & Mi actividad View */
           <>
             <div>
-              <h2 className="text-lg font-extrabold text-[#1E2B45]">Partidos abiertos</h2>
-              <p className="text-xs text-slate-500">
-                Encuentra partidos disponibles y únete en tu nivel
-              </p>
+              {/* Sports Community Section Header Banner */}
+              <div className="rounded-2xl overflow-hidden bg-[#172442] text-white shadow-sm relative min-h-[96px] flex items-stretch">
+                <div className="w-[60%] p-3.5 z-10 flex flex-col justify-center">
+                  <span className="text-[10px] font-extrabold tracking-wider text-[#B6E22E] uppercase">
+                    {subTab === 'actividad' ? 'Tu participación' : 'Comunidad activa'}
+                  </span>
+                  <h2 className="mt-0.5 text-lg font-extrabold leading-tight">
+                    {subTab === 'actividad' ? 'Mi actividad' : 'Partidos abiertos'}
+                  </h2>
+                  <p className="mt-0.5 text-[11px] text-white/85 leading-snug">
+                    {subTab === 'actividad'
+                      ? 'Partidos y convocatorias en los que participas'
+                      : 'Encuentra partidos disponibles y únete en tu nivel'}
+                  </p>
+                </div>
+                <div className="w-[46%] -ml-6 relative overflow-hidden shrink-0">
+                  <img
+                    src={
+                      subTab === 'actividad'
+                        ? '/assets/photos/comunidad/partido_03.webp'
+                        : '/assets/photos/comunidad/partido_01.webp'
+                    }
+                    alt={
+                      subTab === 'actividad'
+                        ? 'Jugador en acción en partido comunitario'
+                        : 'Jugadores compartiendo victoria en la cancha'
+                    }
+                    decoding="async"
+                    className="w-full h-full object-cover object-top"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#172442] via-[#172442]/40 to-transparent" />
+                </div>
+              </div>
 
               {/* Filters */}
               <div className="mt-2.5 grid grid-cols-2 gap-2">
@@ -634,6 +755,13 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
 
             {featuredMatch && (
               <div className="rounded-2xl bg-[#1D2D4E] text-white shadow-md overflow-hidden relative flex">
+                <img
+                  src="/assets/photos/fondos/fondo_03.webp"
+                  alt=""
+                  aria-hidden="true"
+                  decoding="async"
+                  className="pointer-events-none select-none absolute inset-0 w-full h-full object-cover object-left opacity-25"
+                />
                 <div className="w-[62%] p-3.5 z-10 flex flex-col justify-between">
                   <div>
                     <span className="inline-flex items-center gap-1 rounded-lg bg-[#B6E22E] px-2 py-0.5 text-[10px] font-extrabold text-[#16223B]">
@@ -652,17 +780,33 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                         <MapPin className="w-3.5 h-3.5 text-[#ACD638]" />
                         {state.sedes.find((s) => s.id === featuredMatch.sedeId)?.nombre}
                       </p>
-                      <p className="flex items-center gap-1.5 tabular-nums">
-                        <Users className="w-3.5 h-3.5 text-[#ACD638]" />
-                        <span>
-                          {featuredMatch.jugadoresIds.length}/{featuredMatch.cupoTotal} jugadores
-                        </span>
-                        <span className="rounded-md bg-white/15 px-1.5 py-0.5 text-[10px]">
-                          {featuredMatch.cupoTotal - featuredMatch.jugadoresIds.length > 0
-                            ? `Faltan ${featuredMatch.cupoTotal - featuredMatch.jugadoresIds.length}`
-                            : 'Cupo completo'}
-                        </span>
-                      </p>
+                      <div className="flex items-center gap-2 pt-0.5">
+                        <div className="flex items-center -space-x-2">
+                          {featuredMatch.jugadoresIds.slice(0, 4).map((uid) => {
+                            const u = state.usuarios.find((x) => x.id === uid);
+                            return (
+                              <PlayerAvatar
+                                key={uid}
+                                nombre={u?.nombre || 'Jugador'}
+                                seed={u?.avatarSeed}
+                                avatarUrl={u?.avatarUrl}
+                                size="xs"
+                                ringLime={uid === featuredMatch.organizadorId}
+                              />
+                            );
+                          })}
+                        </div>
+                        <p className="flex items-center gap-1.5 tabular-nums">
+                          <span>
+                            {featuredMatch.jugadoresIds.length}/{featuredMatch.cupoTotal} jugadores
+                          </span>
+                          <span className="rounded-md bg-white/15 px-1.5 py-0.5 text-[10px]">
+                            {featuredMatch.cupoTotal - featuredMatch.jugadoresIds.length > 0
+                              ? `Faltan ${featuredMatch.cupoTotal - featuredMatch.jugadoresIds.length}`
+                              : 'Cupo completo'}
+                          </span>
+                        </p>
+                      </div>
                     </div>
                   </div>
                   <div className="mt-3 flex items-center gap-2">
@@ -691,7 +835,18 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                   className="w-[44%] -ml-4 relative"
                   style={{ clipPath: 'polygon(18% 0, 100% 0, 100% 100%, 0% 100%)' }}
                 >
-                  <CourtScene variant="night-club" clubLabel="TENIS CLUB PANAMÁ" />
+                  <CourtScene
+                    sedeId={featuredMatch.sedeId}
+                    isPublic={
+                      state.sedes.find((s) => s.id === featuredMatch.sedeId)?.tipo === 'Pública'
+                    }
+                    variant="night-club"
+                    clubLabel={
+                      state.sedes.find((s) => s.id === featuredMatch.sedeId)?.nombre ||
+                      'Tenis Club Panamá'
+                    }
+                    eager
+                  />
                 </div>
               </div>
             )}
@@ -699,8 +854,23 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
             <div className="space-y-3">
               <h3 className="text-base font-extrabold text-[#1E2B45]">Más partidos disponibles</h3>
               {groupedByDate.length === 0 ? (
-                <div className="rounded-2xl bg-white p-6 text-center text-xs text-slate-500">
-                  No hay otros partidos abiertos con estos filtros.
+                <div className="rounded-2xl bg-white overflow-hidden shadow-sm border border-slate-100">
+                  <div className="relative h-24 w-full bg-[#172442]">
+                    <img
+                      src="/assets/photos/comunidad/partido_01.webp"
+                      alt="Jugadores listos para un nuevo partido"
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover object-top"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#131F3A]/80 via-[#131F3A]/20 to-transparent" />
+                    <span className="absolute bottom-2 left-3 text-xs font-extrabold text-white">
+                      ¡Anímate a abrir un cupo!
+                    </span>
+                  </div>
+                  <div className="p-4 text-center text-xs text-slate-500">
+                    No hay otros partidos abiertos con estos filtros.
+                  </div>
                 </div>
               ) : (
                 groupedByDate.map(([fecha, matches]) => {
@@ -714,32 +884,65 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                         const sede = state.sedes.find((s) => s.id === m.sedeId);
                         const joined = m.jugadoresIds.includes(currentUser.id);
                         const full = m.jugadoresIds.length >= m.cupoTotal;
+                        const matchPhoto = getCommunityMatchPhoto(m.modalidad, m.destacado);
                         return (
                           <div
                             key={m.id}
-                            className="rounded-2xl bg-white p-3 shadow-sm border border-slate-100 flex items-center justify-between gap-2"
+                            className="rounded-2xl bg-white p-2.5 shadow-sm border border-slate-100 flex items-center justify-between gap-2.5"
                           >
                             <button
                               type="button"
                               onClick={() => setSelectedConvId(m.id)}
-                              className="text-left min-w-0 flex-1 cursor-pointer"
+                              className="flex items-center gap-2.5 text-left min-w-0 flex-1 cursor-pointer"
                             >
-                              <h4 className="text-xs font-extrabold text-[#1E2B45] truncate">
-                                {m.titulo}
-                              </h4>
-                              <p className="mt-1 text-[11px] text-slate-500 flex items-center gap-2 tabular-nums">
-                                <span className="inline-flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  {formatHour12(m.horaInicio)}
+                              <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-[#172442] shrink-0">
+                                <img
+                                  src={matchPhoto.src}
+                                  alt={matchPhoto.alt}
+                                  loading="lazy"
+                                  decoding="async"
+                                  className="w-full h-full object-cover object-top"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-[#131F3A]/65 via-transparent to-transparent" />
+                                <span className="absolute bottom-1 left-1 right-1 text-[8.5px] font-extrabold text-white/95 truncate text-center">
+                                  {m.modalidad}
                                 </span>
-                                <span>·</span>
-                                <span>
-                                  {m.jugadoresIds.length}/{m.cupoTotal} jugadores
-                                </span>
-                              </p>
-                              <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                                {sede?.nombre} · Aporte B/. {m.aportePorJugador.toFixed(2)}
-                              </p>
+                              </div>
+
+                              <div className="min-w-0 flex-1">
+                                <h4 className="text-xs font-extrabold text-[#1E2B45] truncate">
+                                  {m.titulo}
+                                </h4>
+                                <div className="mt-1 flex items-center gap-2">
+                                  <div className="flex items-center -space-x-1.5 shrink-0">
+                                    {m.jugadoresIds.slice(0, 4).map((uid) => {
+                                      const u = state.usuarios.find((x) => x.id === uid);
+                                      return (
+                                        <PlayerAvatar
+                                          key={uid}
+                                          nombre={u?.nombre || 'Jugador'}
+                                          seed={u?.avatarSeed}
+                                          avatarUrl={u?.avatarUrl}
+                                          size="xs"
+                                        />
+                                      );
+                                    })}
+                                  </div>
+                                  <p className="text-[11px] text-slate-500 flex items-center gap-1 tabular-nums truncate">
+                                    <span className="inline-flex items-center gap-1">
+                                      <Clock className="w-3 h-3" />
+                                      {formatHour12(m.horaInicio)}
+                                    </span>
+                                    <span>·</span>
+                                    <span>
+                                      {m.jugadoresIds.length}/{m.cupoTotal}
+                                    </span>
+                                  </p>
+                                </div>
+                                <p className="text-[10.5px] text-slate-500 truncate mt-1">
+                                  {sede?.nombre} · B/. {m.aportePorJugador.toFixed(2)}
+                                </p>
+                              </div>
                             </button>
                             <button
                               type="button"
@@ -763,14 +966,38 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
               )}
             </div>
 
-            <button
-              type="button"
-              onClick={() => setShowActionChoice(true)}
-              className="w-full rounded-2xl bg-[#B6E22E] hover:bg-[#ACD638] py-3.5 text-base font-extrabold text-[#16223B] flex items-center justify-center gap-2 shadow-sm cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Crear partido</span>
-            </button>
+            {/* Community Participation & Match Creation Banner */}
+            <div className="rounded-2xl overflow-hidden bg-[#172442] text-white shadow-md relative">
+              <img
+                src="/assets/photos/comunidad/partido_02.webp"
+                alt="Jugadores disfrutando partido de dobles en comunidad"
+                loading="lazy"
+                decoding="async"
+                className="pointer-events-none select-none absolute inset-y-0 right-0 w-[62%] h-full object-cover object-top opacity-75"
+              />
+              <div className="pointer-events-none select-none absolute inset-0 bg-gradient-to-r from-[#131F3A] via-[#172442]/92 to-[#172442]/35" />
+              <div className="relative z-10 p-4 space-y-3">
+                <div className="max-w-[70%]">
+                  <span className="text-[10px] font-extrabold tracking-wider text-[#B6E22E] uppercase">
+                    Organiza y juega
+                  </span>
+                  <h4 className="mt-0.5 text-sm font-extrabold leading-snug">
+                    Arma tu próximo partido con la comunidad
+                  </h4>
+                  <p className="mt-0.5 text-[11px] text-white/80 leading-snug">
+                    Abre cupos sobre tu reserva o coordina horarios en grupo.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowActionChoice(true)}
+                  className="w-full rounded-xl bg-[#B6E22E] hover:bg-[#ACD638] py-3 text-sm font-extrabold text-[#16223B] flex items-center justify-center gap-2 shadow-sm cursor-pointer transition"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Crear partido</span>
+                </button>
+              </div>
+            </div>
           </>
         )}
       </div>
@@ -786,12 +1013,20 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                 setShowActionChoice(false);
                 setShowCreateConvModal(true);
               }}
-              className="w-full rounded-2xl border-2 border-[#ACD638] bg-[#F7FCEB] p-3.5 text-left cursor-pointer"
+              className="w-full rounded-2xl border-2 border-[#ACD638] bg-[#F7FCEB] p-3 text-left flex items-center gap-3 cursor-pointer"
             >
-              <span className="block text-sm font-extrabold text-[#1E2B45]">Tengo cancha reservada</span>
-              <span className="block text-xs text-slate-600 mt-0.5">
-                Selecciona una reserva confirmada y abre cupos para jugadores.
-              </span>
+              <img
+                src="/assets/photos/comunidad/partido_03.webp"
+                alt="Publicar convocatoria sobre cancha reservada"
+                decoding="async"
+                className="w-14 h-12 rounded-xl object-cover object-top shrink-0"
+              />
+              <div className="min-w-0">
+                <span className="block text-sm font-extrabold text-[#1E2B45]">Tengo cancha reservada</span>
+                <span className="block text-xs text-slate-600 mt-0.5">
+                  Selecciona una reserva confirmada y abre cupos para jugadores.
+                </span>
+              </div>
             </button>
             <button
               type="button"
@@ -799,12 +1034,20 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                 setShowActionChoice(false);
                 setShowCreatePlanModal(true);
               }}
-              className="w-full rounded-2xl border border-slate-200 p-3.5 text-left cursor-pointer"
+              className="w-full rounded-2xl border border-slate-200 p-3 text-left flex items-center gap-3 hover:border-[#ACD638] transition cursor-pointer"
             >
-              <span className="block text-sm font-extrabold text-[#1E2B45]">Planificar un partido</span>
-              <span className="block text-xs text-slate-600 mt-0.5">
-                Propón fechas y vota en grupo antes de reservar ni pagar.
-              </span>
+              <img
+                src="/assets/photos/comunidad/partido_01.webp"
+                alt="Planificar partido en grupo"
+                decoding="async"
+                className="w-14 h-12 rounded-xl object-cover object-top shrink-0"
+              />
+              <div className="min-w-0">
+                <span className="block text-sm font-extrabold text-[#1E2B45]">Planificar un partido</span>
+                <span className="block text-xs text-slate-600 mt-0.5">
+                  Propón fechas y vota en grupo antes de reservar ni pagar.
+                </span>
+              </div>
             </button>
             <button
               type="button"
@@ -821,22 +1064,31 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
       {selectedConv && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="w-full max-w-[400px] max-h-[85dvh] overflow-y-auto rounded-3xl bg-white p-5 space-y-4">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <span className="text-[11px] font-bold text-[#5E8210]">{selectedConv.estado}</span>
-                <h3 className="text-base font-extrabold text-[#1E2B45]">{selectedConv.titulo}</h3>
-                <p className="text-xs text-slate-500">
+            <div className="relative h-24 rounded-2xl overflow-hidden bg-[#172442]">
+              <img
+                src={getCommunityMatchPhoto(selectedConv.modalidad, selectedConv.destacado).src}
+                alt={getCommunityMatchPhoto(selectedConv.modalidad, selectedConv.destacado).alt}
+                decoding="async"
+                className="w-full h-full object-cover object-top"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#131F3A]/90 via-[#131F3A]/35 to-transparent" />
+              <span className="absolute top-2.5 left-3 rounded-lg bg-[#B6E22E] px-2 py-0.5 text-[10px] font-extrabold text-[#16223B]">
+                {selectedConv.estado}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedConvId(null)}
+                className="absolute top-2 right-2 rounded-lg bg-black/45 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 cursor-pointer"
+              >
+                Cerrar
+              </button>
+              <div className="absolute bottom-2 left-3 right-3 text-white">
+                <h3 className="text-sm font-extrabold leading-tight truncate">{selectedConv.titulo}</h3>
+                <p className="text-[11px] text-white/85 truncate">
                   {state.sedes.find((s) => s.id === selectedConv.sedeId)?.nombre} ·{' '}
                   {formatHour12(selectedConv.horaInicio)}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setSelectedConvId(null)}
-                className="text-xs font-bold text-slate-500 px-2 py-1"
-              >
-                Cerrar
-              </button>
             </div>
 
             <p className="text-xs text-slate-600">{selectedConv.descripcion}</p>
@@ -868,9 +1120,16 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                   return (
                     <span
                       key={uid}
-                      className="rounded-xl bg-[#F4F6F9] px-2.5 py-1 text-xs font-bold text-[#1E2B45]"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-[#F4F6F9] pl-1 pr-2.5 py-0.5 border border-slate-200 text-xs font-bold text-[#1E2B45]"
                     >
-                      {u?.nombre || 'Jugador'}
+                      <PlayerAvatar
+                        nombre={u?.nombre || 'Jugador'}
+                        seed={u?.avatarSeed}
+                        avatarUrl={u?.avatarUrl}
+                        size="xs"
+                        ringLime={uid === selectedConv.organizadorId}
+                      />
+                      <span>{u?.nombre || 'Jugador'}</span>
                     </span>
                   );
                 })}
@@ -885,7 +1144,15 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                     const u = state.usuarios.find((x) => x.id === uid);
                     return (
                       <div key={uid} className="flex items-center justify-between text-xs bg-slate-50 p-2 rounded-xl">
-                        <span>{u?.nombre}</span>
+                        <div className="flex items-center gap-2">
+                          <PlayerAvatar
+                            nombre={u?.nombre || 'Jugador'}
+                            seed={u?.avatarSeed}
+                            avatarUrl={u?.avatarUrl}
+                            size="xs"
+                          />
+                          <span className="font-bold text-[#1E2B45]">{u?.nombre}</span>
+                        </div>
                         <div className="flex gap-1.5">
                           <button
                             type="button"
@@ -913,11 +1180,22 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
               <div className="space-y-2 border-t border-slate-100 pt-3">
                 <h4 className="text-xs font-extrabold text-[#1E2B45]">Chat del partido</h4>
                 <div className="space-y-1.5 max-h-28 overflow-y-auto">
-                  {selectedConv.mensajes.map((m) => (
-                    <div key={m.id} className="text-xs bg-[#F4F6F9] rounded-xl px-2.5 py-1.5">
-                      <strong>{m.autorNombre}:</strong> {m.texto}
-                    </div>
-                  ))}
+                  {selectedConv.mensajes.map((m) => {
+                    const msgUser = state.usuarios.find((usr) => usr.id === m.autorId);
+                    return (
+                      <div key={m.id} className="flex items-start gap-2">
+                        <PlayerAvatar
+                          nombre={m.autorNombre}
+                          seed={msgUser?.avatarSeed}
+                          avatarUrl={msgUser?.avatarUrl}
+                          size="xs"
+                        />
+                        <div className="text-xs bg-[#F4F6F9] rounded-xl px-2.5 py-1.5 flex-1">
+                          <strong>{m.autorNombre}:</strong> {m.texto}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
                 <form
                   onSubmit={(e) => {

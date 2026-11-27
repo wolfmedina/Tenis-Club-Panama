@@ -17,139 +17,171 @@ export const BrandLogo: React.FC<{ className?: string; size?: 'sm' | 'md' | 'lg'
   );
 };
 
+const PRIVATE_COURT_PHOTOS = [
+  '/assets/photos/privadas/privada_01.webp',
+  '/assets/photos/privadas/privada_02.webp',
+  '/assets/photos/privadas/privada_03.webp',
+  '/assets/photos/privadas/privada_04.webp',
+  '/assets/photos/privadas/privada_05.webp',
+  '/assets/photos/privadas/privada_06.webp',
+] as const;
+
+const PUBLIC_COURT_PHOTOS = [
+  '/assets/photos/publicas/publica_01.webp',
+  '/assets/photos/publicas/publica_02.webp',
+  '/assets/photos/publicas/publica_03.webp',
+  '/assets/photos/publicas/publica_04.webp',
+  '/assets/photos/publicas/publica_05.webp',
+  '/assets/photos/publicas/publica_06.webp',
+] as const;
+
+const SEDE_BASE_PHOTO_INDEX: Record<string, { isPublic: boolean; index: number }> = {
+  sede_tcp: { isPublic: false, index: 0 },
+  sede_costaverde: { isPublic: false, index: 1 },
+  sede_pacifico: { isPublic: false, index: 2 },
+  sede_balboa: { isPublic: false, index: 3 },
+  sede_david: { isPublic: false, index: 4 },
+  sede_omar: { isPublic: true, index: 0 },
+};
+
+const VARIANT_BASE_INDEX: Record<Sede['imagenVariant'], number> = {
+  'night-club': 0,
+  'west-clay': 1,
+  'coastal-palm': 2,
+  'balboa-park': 3,
+};
+
 export const CourtScene: React.FC<{
+  sedeId?: string;
+  isPublic?: boolean;
   variant?: Sede['imagenVariant'];
+  photoIndex?: number;
   clubLabel?: string;
   className?: string;
-}> = ({ variant = 'night-club', clubLabel = 'TENIS CLUB PANAMÁ', className = '' }) => {
-  const palette =
-    variant === 'coastal-palm'
-      ? { skyTop: '#164E63', skyBot: '#38BDF8', courtBlue: '#1D4ED8', surround: '#3F7D4C', night: false }
-      : variant === 'balboa-park'
-        ? { skyTop: '#0F766E', skyBot: '#6EE7B7', courtBlue: '#1E40AF', surround: '#4D7C0F', night: false }
-        : variant === 'west-clay'
-          ? { skyTop: '#1E3A5F', skyBot: '#60A5FA', courtBlue: '#B45309', surround: '#78350F', night: false }
-          : { skyTop: '#0A1328', skyBot: '#1B2D52', courtBlue: '#1D4ED8', surround: '#3B6E38', night: true };
+  eager?: boolean;
+}> = ({
+  sedeId,
+  isPublic,
+  variant = 'night-club',
+  photoIndex = 0,
+  clubLabel = 'Tenis Club Panamá',
+  className = '',
+  eager = false,
+}) => {
+  const mappedSede = sedeId ? SEDE_BASE_PHOTO_INDEX[sedeId] : undefined;
+  const usePublic = isPublic ?? mappedSede?.isPublic ?? false;
+  const gallery = usePublic ? PUBLIC_COURT_PHOTOS : PRIVATE_COURT_PHOTOS;
+
+  const baseIdx = mappedSede
+    ? mappedSede.index
+    : usePublic
+      ? 0
+      : VARIANT_BASE_INDEX[variant] ?? 0;
+
+  const safeIdx = ((baseIdx + photoIndex) % gallery.length + gallery.length) % gallery.length;
+  const src = gallery[safeIdx];
 
   return (
-    <svg
-      viewBox="0 0 400 220"
-      className={`w-full h-full object-cover ${className}`}
-      aria-label={clubLabel}
-      preserveAspectRatio="xMidYMid slice"
-    >
-      <defs>
-        <linearGradient id={`sky-${variant}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={palette.skyTop} />
-          <stop offset="100%" stopColor={palette.skyBot} />
-        </linearGradient>
-        <linearGradient id={`court-${variant}`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor={palette.courtBlue} />
-          <stop offset="100%" stopColor={variant === 'west-clay' ? '#92400E' : '#1E3A8A'} />
-        </linearGradient>
-      </defs>
-
-      {/* Sky */}
-      <rect width="400" height="125" fill={`url(#sky-${variant})`} />
-
-      {/* Trees / City skyline */}
-      <path
-        d="M0 105 Q35 72 70 98 T140 94 T210 96 T290 88 T360 95 L400 100 L400 128 L0 128 Z"
-        fill={palette.night ? '#0E241C' : '#166534'}
-        opacity="0.9"
-      />
-      {!palette.night && (
-        <g fill="#1E293B" opacity="0.45">
-          <rect x="260" y="34" width="20" height="68" rx="2" />
-          <rect x="286" y="20" width="24" height="82" rx="2" />
-          <rect x="316" y="42" width="18" height="60" rx="2" />
-        </g>
-      )}
-
-      {/* Floodlights for night courts */}
-      {palette.night && (
-        <g>
-          <line x1="60" y1="28" x2="60" y2="122" stroke="#64748B" strokeWidth="3" />
-          <circle cx="60" cy="26" r="16" fill="#FEF08A" opacity="0.22" />
-          <rect x="52" y="23" width="16" height="6" rx="2" fill="#FEF9C3" />
-
-          <line x1="170" y1="36" x2="170" y2="122" stroke="#64748B" strokeWidth="2.5" />
-          <circle cx="170" cy="34" r="14" fill="#FEF08A" opacity="0.2" />
-          <rect x="163" y="31" width="14" height="5" rx="2" fill="#FEF9C3" />
-
-          <line x1="340" y1="26" x2="340" y2="122" stroke="#64748B" strokeWidth="3" />
-          <circle cx="340" cy="24" r="18" fill="#FEF08A" opacity="0.24" />
-          <rect x="331" y="21" width="18" height="6" rx="2" fill="#FEF9C3" />
-        </g>
-      )}
-
-      {/* Back Fence & Club Banner */}
-      <rect x="0" y="76" width="400" height="48" fill="#0F2A22" opacity="0.78" />
-      <rect x="182" y="79" width="166" height="40" rx="3" fill="#182C4C" />
-      <text
-        x="265"
-        y="96"
-        textAnchor="middle"
-        fill="#FFFFFF"
-        fontSize="8.8"
-        fontWeight="800"
-        letterSpacing="0.5"
-      >
-        {clubLabel.slice(0, 18).toUpperCase()}
-      </text>
-      <text
-        x="265"
-        y="109"
-        textAnchor="middle"
-        fill="#ACD638"
-        fontSize="7.8"
-        fontWeight="700"
-        letterSpacing="1.1"
-      >
-        PANAMÁ
-      </text>
-
-      {/* Court surround */}
-      <polygon points="0,124 400,124 400,220 0,220" fill={palette.surround} />
-
-      {/* Perspective blue court surface */}
-      <polygon points="88,128 312,128 378,218 22,218" fill={`url(#court-${variant})`} />
-
-      {/* Crisp white court lines */}
-      <polygon
-        points="88,128 312,128 378,218 22,218"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth="2.4"
-      />
-      <line x1="112" y1="128" x2="62" y2="218" stroke="#FFFFFF" strokeWidth="1.8" />
-      <line x1="288" y1="128" x2="338" y2="218" stroke="#FFFFFF" strokeWidth="1.8" />
-      <line x1="76" y1="184" x2="324" y2="184" stroke="#FFFFFF" strokeWidth="1.8" />
-      <line x1="200" y1="150" x2="200" y2="184" stroke="#FFFFFF" strokeWidth="1.8" />
-
-      {/* Tennis Net */}
-      <line x1="46" y1="156" x2="354" y2="156" stroke="#E2E8F0" strokeWidth="2.5" />
-      <rect x="48" y="156" width="304" height="12" fill="#0F172A" opacity="0.45" />
-      <line x1="48" y1="149" x2="48" y2="169" stroke="#CBD5E1" strokeWidth="3.5" />
-      <line x1="352" y1="149" x2="352" y2="169" stroke="#CBD5E1" strokeWidth="3.5" />
-    </svg>
+    <img
+      src={src}
+      alt={clubLabel}
+      loading={eager ? 'eager' : 'lazy'}
+      decoding="async"
+      className={`w-full h-full object-cover object-center block select-none ${className}`}
+    />
   );
 };
 
-const AVATAR_COLORS: Record<string, { bg: string; shirt: string; accent: string }> = {
-  carlos: { bg: '#DBEAFE', shirt: '#273758', accent: '#ACD638' },
-  carlos_coach: { bg: '#E0F2FE', shirt: '#1E3A8A', accent: '#ACD638' },
-  andres: { bg: '#ECFCCB', shirt: '#1E293B', accent: '#ACD638' },
-  maria: { bg: '#FCE7F3', shirt: '#273758', accent: '#F472B6' },
-  javier: { bg: '#FEF3C7', shirt: '#334155', accent: '#F59E0B' },
-  valentina: { bg: '#EDE9FE', shirt: '#273758', accent: '#A78BFA' },
-  diego: { bg: '#D1FAE5', shirt: '#1E293B', accent: '#34D399' },
-  sofia: { bg: '#FFE4E6', shirt: '#273758', accent: '#ACD638' },
-  mateo: { bg: '#E0E7FF', shirt: '#2563EB', accent: '#ACD638' },
-  lucia: { bg: '#FAE8FF', shirt: '#273758', accent: '#ACD638' },
-  ricardo: { bg: '#FEF9C3', shirt: '#18243E', accent: '#ACD638' },
-  super: { bg: '#E2E8F0', shirt: '#18243E', accent: '#ACD638' },
+const INSTRUCTOR_PHOTO_MAP: Record<string, string> = {
+  carlos: '/assets/photos/instructores/instructor_01.webp',
+  carlos_coach: '/assets/photos/instructores/instructor_01.webp',
+  inst_1: '/assets/photos/instructores/instructor_01.webp',
+  maria: '/assets/photos/instructores/instructor_02.webp',
+  maria_coach: '/assets/photos/instructores/instructor_02.webp',
+  inst_2: '/assets/photos/instructores/instructor_02.webp',
+  luis: '/assets/photos/instructores/instructor_03.webp',
+  luis_coach: '/assets/photos/instructores/instructor_03.webp',
+  diego: '/assets/photos/instructores/instructor_03.webp',
+  inst_3: '/assets/photos/instructores/instructor_03.webp',
+  andrea: '/assets/photos/instructores/instructor_04.webp',
+  andrea_coach: '/assets/photos/instructores/instructor_04.webp',
+  valentina: '/assets/photos/instructores/instructor_04.webp',
+  inst_4: '/assets/photos/instructores/instructor_04.webp',
+  instructor_05: '/assets/photos/instructores/instructor_05.webp',
+  instructor_06: '/assets/photos/instructores/instructor_06.webp',
 };
+
+const PLAYER_PHOTO_MAP: Record<string, string> = {
+  carlos: '/assets/photos/jugadores/player_julio.webp',
+  julio: '/assets/photos/jugadores/player_julio.webp',
+  andres: '/assets/photos/jugadores/jugador_01.webp',
+  maria: '/assets/photos/jugadores/jugador_02.webp',
+  ana: '/assets/photos/jugadores/jugador_02.webp',
+  javier: '/assets/photos/jugadores/jugador_03.webp',
+  miguel: '/assets/photos/jugadores/jugador_03.webp',
+  valentina: '/assets/photos/jugadores/jugador_04.webp',
+  diego: '/assets/photos/jugadores/jugador_05.webp',
+  mateo: '/assets/photos/jugadores/jugador_05.webp',
+  sofia: '/assets/photos/jugadores/jugador_06.webp',
+  ricardo: '/assets/photos/jugadores/jugador_07.webp',
+  roberto: '/assets/photos/jugadores/jugador_07.webp',
+  lucia: '/assets/photos/jugadores/jugador_08.webp',
+  super: '/assets/photos/jugadores/player_julio.webp',
+};
+
+function normalizeKey(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+export function resolveAvatarPhoto(
+  nombre: string,
+  seed?: string,
+  avatarUrl?: string,
+  isInstructor?: boolean
+): string {
+  if (avatarUrl) return avatarUrl;
+
+  const normSeed = seed ? normalizeKey(seed) : '';
+  const normName = normalizeKey(nombre);
+  const firstWord = normName.split(/[\s/]+/)[0] || '';
+
+  const instructorLookup =
+    isInstructor ||
+    normSeed.endsWith('_coach') ||
+    normName.includes('mendez') ||
+    normName.includes('fernandez') ||
+    normName.includes('luis herrera') ||
+    normName.includes('andrea castillo');
+
+  if (instructorLookup) {
+    if (normSeed && INSTRUCTOR_PHOTO_MAP[normSeed]) {
+      return INSTRUCTOR_PHOTO_MAP[normSeed];
+    }
+    if (firstWord && INSTRUCTOR_PHOTO_MAP[firstWord]) {
+      return INSTRUCTOR_PHOTO_MAP[firstWord];
+    }
+    return '/assets/photos/instructores/instructor_05.webp';
+  }
+
+  if (normName.includes('julio')) {
+    return '/assets/photos/jugadores/player_julio.webp';
+  }
+  if (normName.includes('carlos administrador')) {
+    return '/assets/photos/jugadores/jugador_07.webp';
+  }
+
+  if (normSeed && PLAYER_PHOTO_MAP[normSeed]) {
+    return PLAYER_PHOTO_MAP[normSeed];
+  }
+  if (firstWord && PLAYER_PHOTO_MAP[firstWord]) {
+    return PLAYER_PHOTO_MAP[firstWord];
+  }
+  return '/assets/photos/jugadores/player_julio.webp';
+}
 
 export const PlayerAvatar: React.FC<{
   nombre: string;
@@ -157,48 +189,43 @@ export const PlayerAvatar: React.FC<{
   avatarUrl?: string;
   size?: 'xs' | 'sm' | 'md' | 'lg';
   ringLime?: boolean;
-}> = ({ nombre, seed = 'carlos', avatarUrl, size = 'md', ringLime = false }) => {
-  const colors = AVATAR_COLORS[seed] || AVATAR_COLORS.carlos;
-  const initials = nombre
-    .split(' ')
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() || '')
-    .join('');
+  isInstructor?: boolean;
+  shape?: 'circle' | 'rounded';
+}> = ({
+  nombre,
+  seed = 'carlos',
+  avatarUrl,
+  size = 'md',
+  ringLime = false,
+  isInstructor = false,
+  shape = 'circle',
+}) => {
+  const src = resolveAvatarPhoto(nombre, seed, avatarUrl, isInstructor);
 
   const sizeCls =
     size === 'xs'
-      ? 'w-7 h-7 text-[10px]'
+      ? 'w-7 h-7'
       : size === 'sm'
-        ? 'w-9 h-9 text-xs'
+        ? 'w-9 h-9'
         : size === 'lg'
-          ? 'w-14 h-14 text-base'
-          : 'w-11 h-11 text-sm';
+          ? 'w-14 h-14'
+          : 'w-11 h-11';
+
+  const shapeCls = shape === 'rounded' ? 'rounded-xl' : 'rounded-full';
 
   return (
     <div
-      className={`${sizeCls} rounded-full shrink-0 overflow-hidden relative flex items-center justify-center font-bold select-none ${
+      className={`${sizeCls} ${shapeCls} shrink-0 overflow-hidden relative bg-[#1E2B45]/10 select-none ${
         ringLime ? 'ring-2 ring-[#ACD638]' : 'ring-1 ring-slate-200'
       }`}
-      style={{ backgroundColor: colors.bg }}
-      aria-label={nombre}
     >
-      {avatarUrl ? (
-        <img
-          src={avatarUrl}
-          alt={nombre}
-          className="w-full h-full object-cover object-top"
-        />
-      ) : (
-        <svg viewBox="0 0 48 48" className="w-full h-full">
-          <rect width="48" height="48" fill={colors.bg} />
-          <circle cx="24" cy="19" r="8.5" fill="#D9A37C" />
-          <path d="M15 17 C16 9, 32 9, 33 17 Z" fill="#1E293B" />
-          <path d="M13 15 L35 15 L33 12 L15 12 Z" fill="#FFFFFF" />
-          <path d="M10 48 C11 34, 37 34, 38 48 Z" fill={colors.shirt} />
-          <path d="M20 35 L24 41 L28 35" stroke={colors.accent} strokeWidth="2" fill="none" />
-        </svg>
-      )}
-      <span className="sr-only">{initials}</span>
+      <img
+        src={src}
+        alt={nombre}
+        loading="lazy"
+        decoding="async"
+        className="w-full h-full object-cover object-top block"
+      />
     </div>
   );
 };

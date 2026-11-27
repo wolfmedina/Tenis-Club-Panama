@@ -83,6 +83,7 @@ export const PlayerProfileView: React.FC<PlayerProfileViewProps> = ({
   return (
     <div className="flex flex-col min-h-full bg-[#F4F6F9]">
       <HeaderBar
+        variant="lines"
         onOpenMenu={onOpenMenu}
         onOpenNotifications={onOpenNotifications}
         onOpenChat={onOpenChat}

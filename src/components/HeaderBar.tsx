@@ -3,7 +3,16 @@ import { Bell, ChevronLeft, Menu, MessageSquare } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { BrandLogo } from './VisualAssets';
 
+export type HeaderBannerVariant = 'ball' | 'net' | 'lines';
+
+const HEADER_BG_MAP: Record<HeaderBannerVariant, string> = {
+  ball: '/assets/photos/fondos/fondo_01.webp',
+  net: '/assets/photos/fondos/fondo_02.webp',
+  lines: '/assets/photos/fondos/fondo_03.webp',
+};
+
 interface HeaderBarProps {
+  variant?: HeaderBannerVariant;
   onBack?: () => void;
   onOpenMenu: () => void;
   onOpenNotifications: () => void;
@@ -12,6 +21,7 @@ interface HeaderBarProps {
 }
 
 export const HeaderBar: React.FC<HeaderBarProps> = ({
+  variant = 'ball',
   onBack,
   onOpenMenu,
   onOpenNotifications,
@@ -23,31 +33,30 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
     (n) => !n.leida && (n.usuarioId === currentUser.id || n.usuarioId === 'ALL')
   ).length;
 
+  const bgSrc = HEADER_BG_MAP[variant];
+
   return (
-    <header className="shrink-0 relative overflow-hidden bg-gradient-to-br from-[#192644] via-[#273758] to-[#1D2D4E] text-white px-4 pt-safe pb-4">
-      {/* Subtle lime streak & tennis ball graphic matching reference screenshots */}
-      <svg
-        viewBox="0 0 480 220"
-        className="absolute inset-0 w-full h-full pointer-events-none select-none"
-        preserveAspectRatio="xMidYMid slice"
+    <header className="shrink-0 relative overflow-hidden bg-gradient-to-br from-[#172442] via-[#223458] to-[#192848] text-white px-4 pt-safe pb-4">
+      {/* Corporate photographic header banner anchored cleanly to panoramic proportions */}
+      <div
         aria-hidden="true"
+        className="pointer-events-none select-none absolute inset-x-0 top-0 h-36 overflow-hidden"
       >
-        <defs>
-          <linearGradient id="hdrLime" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#ACD638" stopOpacity="0.85" />
-            <stop offset="100%" stopColor="#ACD638" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <polygon points="365,0 390,0 305,155 290,155" fill="url(#hdrLime)" opacity="0.65" />
-        <circle cx="435" cy="145" r="56" fill="#A3CF2D" opacity="0.28" />
-        <path
-          d="M402 104 Q428 145 402 186"
-          stroke="#FFFFFF"
-          strokeWidth="2.5"
-          fill="none"
-          opacity="0.28"
+        <img
+          src={bgSrc}
+          alt=""
+          aria-hidden="true"
+          decoding="async"
+          className="w-full h-full object-cover object-right opacity-85"
         />
-      </svg>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#172442]/88 via-[#1E2E52]/58 to-[#172442]/30" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#172442]/25 via-transparent to-[#1E2E52]" />
+      </div>
+      {/* Subtle corporate lime diagonal accent */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none select-none absolute -top-6 right-[96px] w-6 h-44 bg-gradient-to-b from-[#B6E22E] via-[#ACD638]/45 to-transparent rotate-[28deg] opacity-65"
+      />
 
       {/* 3-zone top row */}
       <div className="relative z-10 flex items-center justify-between h-12">

@@ -83,6 +83,7 @@ export const MatchesRankingView: React.FC<MatchesRankingViewProps> = ({
   return (
     <div className="flex flex-col min-h-full bg-[#F4F6F9]">
       <HeaderBar
+        variant="lines"
         onBack={onBack}
         onOpenMenu={onOpenMenu}
         onOpenNotifications={onOpenNotifications}
@@ -317,8 +318,10 @@ export const MatchesRankingView: React.FC<MatchesRankingViewProps> = ({
             </div>
 
             {state.partidos.map((p) => {
-              const pA = state.usuarios.find((u) => u.id === p.equipoAIds[0])?.nombre || 'Equipo A';
-              const pB = state.usuarios.find((u) => u.id === p.equipoBIds[0])?.nombre || 'Equipo B';
+              const userA = state.usuarios.find((u) => u.id === p.equipoAIds[0]);
+              const userB = state.usuarios.find((u) => u.id === p.equipoBIds[0]);
+              const pA = userA?.nombre || 'Equipo A';
+              const pB = userB?.nombre || 'Equipo B';
               const sede = state.sedes.find((s) => s.id === p.sedeId);
 
               return (
@@ -343,11 +346,25 @@ export const MatchesRankingView: React.FC<MatchesRankingViewProps> = ({
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs font-extrabold text-[#1E2B45]">
-                      <span>{pA}</span> <span className="text-slate-400">vs</span> <span>{pB}</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 min-w-0 flex-wrap text-xs font-extrabold text-[#1E2B45]">
+                      <PlayerAvatar
+                        nombre={pA}
+                        seed={userA?.avatarSeed}
+                        avatarUrl={userA?.avatarUrl}
+                        size="xs"
+                      />
+                      <span className="truncate">{pA}</span>
+                      <span className="text-slate-400 font-semibold">vs</span>
+                      <PlayerAvatar
+                        nombre={pB}
+                        seed={userB?.avatarSeed}
+                        avatarUrl={userB?.avatarUrl}
+                        size="xs"
+                      />
+                      <span className="truncate">{pB}</span>
                     </div>
-                    <span className="rounded-xl bg-[#F4F6F9] px-2.5 py-1 text-xs font-mono font-extrabold text-[#273758]">
+                    <span className="shrink-0 rounded-xl bg-[#F4F6F9] px-2.5 py-1 text-xs font-mono font-extrabold text-[#273758]">
                       {p.marcadorSets}
                     </span>
                   </div>

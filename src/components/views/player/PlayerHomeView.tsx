@@ -229,8 +229,11 @@ export const PlayerHomeView: React.FC<PlayerHomeNavProps> = ({
               style={{ clipPath: 'polygon(18% 0, 100% 0, 100% 100%, 0% 100%)' }}
             >
               <CourtScene
+                sedeId={nextResSede?.id}
+                isPublic={nextResSede?.tipo === 'Pública'}
                 variant={nextResSede?.imagenVariant || 'night-club'}
                 clubLabel={nextResSede?.nombre || 'TENIS CLUB PANAMÁ'}
+                eager
               />
             </div>
           </div>
@@ -331,7 +334,12 @@ export const PlayerHomeView: React.FC<PlayerHomeNavProps> = ({
                       className="w-full h-full block text-left cursor-pointer"
                       aria-label={`Ver detalles de ${sede.nombre}`}
                     >
-                      <CourtScene variant={sede.imagenVariant} clubLabel={sede.nombre} />
+                      <CourtScene
+                        sedeId={sede.id}
+                        isPublic={sede.tipo === 'Pública'}
+                        variant={sede.imagenVariant}
+                        clubLabel={sede.nombre}
+                      />
                     </button>
                     <button
                       type="button"

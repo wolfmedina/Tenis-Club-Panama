@@ -28,6 +28,7 @@ import { DEMO_DATES, TIME_SLOTS } from '../../data/seedData';
 import type { AdminSubRole, Modality } from '../../types/tennis';
 import { computeAdminMetrics, formatHour12, isSlotAvailable } from '../../utils/tennisLogic';
 import { HeaderBar } from '../HeaderBar';
+import { PlayerAvatar } from '../VisualAssets';
 
 export type AdminTab = 'inicio' | 'reservas' | 'clases' | 'canchas' | 'mantenimiento' | 'perfil';
 
@@ -178,6 +179,7 @@ export const AdminMobileView: React.FC<AdminMobileViewProps> = ({
   return (
     <div className="flex flex-col min-h-full bg-[#F4F6F9]">
       <HeaderBar
+        variant="lines"
         onOpenMenu={onOpenMenu}
         onOpenNotifications={onOpenNotifications}
         onOpenChat={onOpenChat}
@@ -384,9 +386,17 @@ export const AdminMobileView: React.FC<AdminMobileViewProps> = ({
                 <div className="divide-y divide-slate-100">
                   {sedeReservas.slice(0, 4).map((r) => {
                     const cname = state.canchas.find((c) => c.id === r.canchaId)?.nombre;
+                    const holder = state.usuarios.find((u) => u.id === r.usuarioId);
+                    const holderName = r.participantes[0] || holder?.nombre || 'Jugador';
                     return (
                       <div key={r.id} className="py-2.5 flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2.5 min-w-0">
+                          <PlayerAvatar
+                            nombre={holder?.nombre || holderName}
+                            seed={holder?.avatarSeed || holderName.split(' ')[0]}
+                            avatarUrl={holder?.avatarUrl}
+                            size="xs"
+                          />
                           <span className="text-xs font-extrabold text-[#273758] tabular-nums w-16 shrink-0">
                             {formatHour12(r.horaInicio)}
                           </span>
@@ -554,21 +564,31 @@ export const AdminMobileView: React.FC<AdminMobileViewProps> = ({
 
             {sedeReservas.map((r) => {
               const cname = state.canchas.find((c) => c.id === r.canchaId)?.nombre;
+              const holder = state.usuarios.find((u) => u.id === r.usuarioId);
+              const holderName = r.participantes[0] || holder?.nombre || 'Jugador';
               return (
                 <div key={r.id} className="rounded-2xl bg-white p-3.5 shadow-sm border border-slate-100 space-y-2">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <span className="text-[11px] font-mono font-bold text-[#273758]">
-                        {r.codigo} · {r.tipoOrigen}
-                      </span>
-                      <h3 className="text-sm font-extrabold text-[#1E2B45]">
-                        {cname} · {formatHour12(r.horaInicio)}
-                      </h3>
-                      <p className="text-xs text-slate-500">
-                        {r.participantes.join(', ')} · {r.fecha}
-                      </p>
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex items-start gap-2.5 min-w-0">
+                      <PlayerAvatar
+                        nombre={holder?.nombre || holderName}
+                        seed={holder?.avatarSeed || holderName.split(' ')[0]}
+                        avatarUrl={holder?.avatarUrl}
+                        size="sm"
+                      />
+                      <div className="min-w-0">
+                        <span className="text-[11px] font-mono font-bold text-[#273758]">
+                          {r.codigo} · {r.tipoOrigen}
+                        </span>
+                        <h3 className="text-sm font-extrabold text-[#1E2B45]">
+                          {cname} · {formatHour12(r.horaInicio)}
+                        </h3>
+                        <p className="text-xs text-slate-500 truncate">
+                          {r.participantes.join(', ')} · {r.fecha}
+                        </p>
+                      </div>
                     </div>
-                    <span className="text-xs font-extrabold text-[#273758] tabular-nums">
+                    <span className="text-xs font-extrabold text-[#273758] tabular-nums shrink-0">
                       {r.totalPagado === 0 ? 'Gratuita' : `B/. ${r.totalPagado.toFixed(2)}`}
                     </span>
                   </div>
@@ -660,17 +680,66 @@ export const AdminMobileView: React.FC<AdminMobileViewProps> = ({
               const inst = state.instructores.find((i) => i.id === cl.instructorId);
               const cancha = state.canchas.find((c) => c.id === cl.canchaId);
               return (
-                <div key={cl.id} className="rounded-2xl bg-white p-3.5 shadow-sm border border-slate-100">
-                  <h3 className="text-sm font-extrabold text-[#1E2B45]">{cl.titulo}</h3>
-                  <p className="text-xs text-slate-500">
-                    {inst?.nombre} · {cancha?.nombre} · {cl.fecha} {formatHour12(cl.horaInicio)}
-                  </p>
-                  <p className="text-xs font-bold text-[#5E8210] mt-1">
-                    Alumnos: {cl.alumnosIds.length}/{cl.cupoMax} · B/. {cl.precioPorCupo}/cupo
-                  </p>
+                <div
+                  key={cl.id}
+                  className="rounded-2xl bg-white p-3.5 shadow-sm border border-slate-100 flex items-center gap-3"
+                >
+                  <PlayerAvatar
+                    nombre={inst?.nombre || 'Instructor'}
+                    seed={inst?.avatarSeed}
+                    size="md"
+                    shape="rounded"
+                    isInstructor
+                  />
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-extrabold text-[#1E2B45] truncate">{cl.titulo}</h3>
+                    <p className="text-xs text-slate-500 truncate">
+                      {inst?.nombre} · {cancha?.nombre} · {cl.fecha} {formatHour12(cl.horaInicio)}
+                    </p>
+                    <p className="text-xs font-bold text-[#5E8210] mt-1">
+                      Alumnos: {cl.alumnosIds.length}/{cl.cupoMax} · B/. {cl.precioPorCupo}/cupo
+                    </p>
+                  </div>
                 </div>
               );
             })}
+
+            <div className="rounded-2xl bg-white p-3.5 shadow-sm border border-slate-100 space-y-2.5">
+              <h3 className="text-xs font-extrabold text-[#1E2B45] uppercase tracking-wide">
+                Instructores asignados a {activeSede.nombre}
+              </h3>
+              <div className="space-y-2">
+                {state.instructores
+                  .filter((i) => i.sedesAutorizadas.includes(activeSede.id))
+                  .map((inst) => (
+                    <div
+                      key={inst.id}
+                      className="flex items-center justify-between gap-2.5 rounded-xl bg-[#F9FAFB] p-2.5"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <PlayerAvatar
+                          nombre={inst.nombre}
+                          seed={inst.avatarSeed}
+                          size="sm"
+                          shape="rounded"
+                          isInstructor
+                        />
+                        <div className="min-w-0">
+                          <p className="text-xs font-extrabold text-[#1E2B45] truncate">
+                            {inst.nombre}
+                          </p>
+                          <p className="text-[11px] text-slate-500 truncate">
+                            {inst.titulo} · ★ {inst.rating}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="shrink-0 rounded-lg bg-[#ECFCCB] px-2 py-0.5 text-[10px] font-bold text-[#4E7006] tabular-nums">
+                        B/. {inst.precioBase}/h
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            </div>
           </div>
         )}
 

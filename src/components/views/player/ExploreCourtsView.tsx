@@ -57,6 +57,7 @@ export const ExploreCourtsView: React.FC<ExploreCourtsViewProps> = ({
   return (
     <div className="flex flex-col min-h-full bg-[#F4F6F9]">
       <HeaderBar
+        variant="net"
         onBack={onBack}
         onOpenMenu={onOpenMenu}
         onOpenNotifications={onOpenNotifications}
@@ -241,7 +242,12 @@ export const ExploreCourtsView: React.FC<ExploreCourtsViewProps> = ({
                 className="rounded-2xl bg-white shadow-sm border border-slate-100 overflow-hidden"
               >
                 <div className="relative h-32">
-                  <CourtScene variant={sede.imagenVariant} clubLabel={sede.nombre} />
+                  <CourtScene
+                    sedeId={sede.id}
+                    isPublic={sede.tipo === 'Pública'}
+                    variant={sede.imagenVariant}
+                    clubLabel={sede.nombre}
+                  />
                   <button
                     type="button"
                     onClick={() => toggleFavoriteSede(sede.id)}

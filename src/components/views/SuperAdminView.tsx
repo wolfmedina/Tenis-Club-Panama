@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { HeaderBar } from '../HeaderBar';
+import { PlayerAvatar } from '../VisualAssets';
 
 export type SuperAdminTab = 'dashboard' | 'organizaciones' | 'disputas' | 'config';
 
@@ -66,6 +67,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({
   return (
     <div className="flex flex-col min-h-full bg-[#F4F6F9]">
       <HeaderBar
+        variant="lines"
         onOpenMenu={onOpenMenu}
         onOpenNotifications={onOpenNotifications}
         onOpenChat={onOpenChat}
@@ -123,11 +125,19 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({
                 .filter((u) => u.categoria === 'Profesional' && u.rol === 'jugador')
                 .map((u) => (
                   <div key={u.id} className="flex items-center justify-between text-xs py-1">
-                    <div>
-                      <span className="font-bold text-[#1E2B45]">{u.nombre}</span>
-                      <span className="block text-[10.5px] text-slate-500">
-                        Elo Pro: {u.elo.Profesional}
-                      </span>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <PlayerAvatar
+                        nombre={u.nombre}
+                        seed={u.avatarSeed}
+                        avatarUrl={u.avatarUrl}
+                        size="sm"
+                      />
+                      <div className="min-w-0">
+                        <span className="font-bold text-[#1E2B45] truncate block">{u.nombre}</span>
+                        <span className="block text-[10.5px] text-slate-500">
+                          Elo Pro: {u.elo.Profesional}
+                        </span>
+                      </div>
                     </div>
                     <button
                       type="button"
@@ -210,13 +220,31 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({
               </div>
             ) : (
               disputedMatches.map((m) => {
-                const pA = state.usuarios.find((u) => u.id === m.equipoAIds[0])?.nombre || 'A';
-                const pB = state.usuarios.find((u) => u.id === m.equipoBIds[0])?.nombre || 'B';
+                const userA = state.usuarios.find((u) => u.id === m.equipoAIds[0]);
+                const userB = state.usuarios.find((u) => u.id === m.equipoBIds[0]);
+                const pA = userA?.nombre || 'A';
+                const pB = userB?.nombre || 'B';
                 return (
                   <div key={m.id} className="rounded-2xl bg-white p-4 shadow-sm border border-slate-100 space-y-2.5">
-                    <p className="text-xs font-extrabold text-[#1E2B45]">
-                      {pA} vs {pB} · {m.marcadorSets}
-                    </p>
+                    <div className="flex items-center gap-1.5 flex-wrap text-xs font-extrabold text-[#1E2B45]">
+                      <PlayerAvatar
+                        nombre={pA}
+                        seed={userA?.avatarSeed}
+                        avatarUrl={userA?.avatarUrl}
+                        size="xs"
+                      />
+                      <span>{pA}</span>
+                      <span className="text-slate-400 font-semibold">vs</span>
+                      <PlayerAvatar
+                        nombre={pB}
+                        seed={userB?.avatarSeed}
+                        avatarUrl={userB?.avatarUrl}
+                        size="xs"
+                      />
+                      <span>{pB}</span>
+                      <span className="text-slate-400">·</span>
+                      <span className="font-mono">{m.marcadorSets}</span>
+                    </div>
                     <p className="text-xs text-rose-700">{m.motivoDisputa}</p>
                     <div className="flex gap-2">
                       <button

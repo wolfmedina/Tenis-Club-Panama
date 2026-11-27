@@ -16,7 +16,7 @@ import { DEMO_DATES, TIME_SLOTS } from '../../../data/seedData';
 import type { Reserva } from '../../../types/tennis';
 import { formatHour12, isSlotAvailable } from '../../../utils/tennisLogic';
 import { HeaderBar } from '../../HeaderBar';
-import { DemoQRCode } from '../../VisualAssets';
+import { DemoQRCode, PlayerAvatar } from '../../VisualAssets';
 
 interface MyBookingsViewProps {
   initialReservaId?: string;
@@ -71,6 +71,7 @@ export const MyBookingsView: React.FC<MyBookingsViewProps> = ({
   return (
     <div className="flex flex-col min-h-full bg-[#F4F6F9]">
       <HeaderBar
+        variant="lines"
         onOpenMenu={onOpenMenu}
         onOpenNotifications={onOpenNotifications}
         onOpenChat={onOpenChat}
@@ -231,13 +232,36 @@ export const MyBookingsView: React.FC<MyBookingsViewProps> = ({
                 {isExpanded && (
                   <div className="pt-3 border-t border-slate-100 flex flex-col items-center gap-3">
                     <DemoQRCode code={res.codigo} />
-                    <div className="w-full rounded-xl bg-[#F4F6F9] p-3 text-xs space-y-1">
+                    <div className="w-full rounded-xl bg-[#F4F6F9] p-3 text-xs space-y-2">
                       <p className="font-bold text-[#1E2B45] flex items-center gap-1.5">
                         <Users className="w-3.5 h-3.5" />
                         Participantes ({res.modalidad}):
                       </p>
-                      <p className="text-slate-600">{res.participantes.join(', ')}</p>
-                      <p className="text-[11px] text-slate-500 pt-1 flex items-center gap-1">
+                      <div className="flex flex-wrap gap-1.5">
+                        {res.participantes.map((part, idx) => {
+                          const normPart = part.trim().toLowerCase();
+                          const matched = state.usuarios.find(
+                            (u) =>
+                              u.nombre.toLowerCase() === normPart ||
+                              u.nombre.toLowerCase().startsWith(`${normPart} `)
+                          );
+                          return (
+                            <span
+                              key={`${part}-${idx}`}
+                              className="inline-flex items-center gap-1.5 rounded-full bg-white pl-1 pr-2.5 py-0.5 border border-slate-200 text-[11px] font-bold text-[#1E2B45]"
+                            >
+                              <PlayerAvatar
+                                nombre={matched?.nombre || part}
+                                seed={matched?.avatarSeed || part.split(' ')[0]}
+                                avatarUrl={matched?.avatarUrl}
+                                size="xs"
+                              />
+                              <span>{part}</span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                      <p className="text-[11px] text-slate-500 pt-0.5 flex items-center gap-1">
                         <CheckCircle2 className="w-3.5 h-3.5 text-[#5E8210]" />
                         Política: cancelación gratuita hasta {sede?.politicaCancelacionHoras || 12} h antes.
                       </p>

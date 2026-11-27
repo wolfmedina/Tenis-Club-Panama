@@ -17,7 +17,7 @@ import { DEMO_DATES } from '../../../data/seedData';
 import type { ClaseProgramada, Instructor, PaymentMethod } from '../../../types/tennis';
 import { formatHour12, isInstructorAvailable, isSlotAvailable } from '../../../utils/tennisLogic';
 import { HeaderBar } from '../../HeaderBar';
-import { PlayerAvatar } from '../../VisualAssets';
+import { PlayerAvatar, resolveAvatarPhoto } from '../../VisualAssets';
 
 interface ClassesViewProps {
   onBack: () => void;
@@ -102,6 +102,7 @@ export const ClassesView: React.FC<ClassesViewProps> = ({
   return (
     <div className="flex flex-col min-h-full bg-[#F4F6F9]">
       <HeaderBar
+        variant="net"
         onBack={onBack}
         onOpenMenu={onOpenMenu}
         onOpenNotifications={onOpenNotifications}
@@ -172,38 +173,40 @@ export const ClassesView: React.FC<ClassesViewProps> = ({
         {tab === 'instructores' ? (
           <>
             {featured && (
-              <div className="rounded-2xl bg-white shadow-sm border border-slate-100 overflow-hidden flex">
-                <div className="w-[64%] p-3.5 space-y-1.5">
-                  <span className="text-[10.5px] font-extrabold text-[#273758]/70 flex items-center gap-1">
-                    <GraduationCap className="w-3.5 h-3.5" /> INSTRUCTOR DESTACADO
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-base font-extrabold text-[#1E2B45]">{featured.nombre}</h2>
-                    <span className="inline-flex items-center gap-0.5 text-xs font-bold text-[#1E2B45]">
-                      <Star className="w-3.5 h-3.5 fill-[#ACD638] text-[#ACD638]" />
-                      {featured.rating}
+              <div className="rounded-2xl bg-white shadow-sm border border-slate-100 overflow-hidden flex min-h-[196px]">
+                <div className="w-[62%] p-3.5 space-y-1.5 z-10 flex flex-col justify-between bg-white">
+                  <div>
+                    <span className="text-[10.5px] font-extrabold text-[#273758]/70 flex items-center gap-1">
+                      <GraduationCap className="w-3.5 h-3.5" /> INSTRUCTOR DESTACADO
                     </span>
-                  </div>
-                  <p className="text-[11px] text-slate-500">{featured.titulo}</p>
-                  <p className="text-[11px] text-slate-600">
-                    <strong>Especialidades:</strong> {featured.especialidades.join(' · ')}
-                  </p>
-                  <p className="text-[11px] text-slate-600">
-                    <strong>Tipos:</strong> {featured.tiposClase.join(' | ')}
-                  </p>
-                  <div className="flex items-center gap-2 pt-1">
-                    <span className="text-xs font-extrabold text-[#1E2B45] tabular-nums">
-                      Desde B/. {featured.precioBase.toFixed(2)} / clase
-                    </span>
-                    <span className="rounded-lg bg-[#ECFCCB] px-2 py-0.5 text-[10px] font-bold text-[#4E7006]">
-                      {featured.proximaSlotTexto}
-                    </span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <h2 className="text-base font-extrabold text-[#1E2B45]">{featured.nombre}</h2>
+                      <span className="inline-flex items-center gap-0.5 text-xs font-bold text-[#1E2B45]">
+                        <Star className="w-3.5 h-3.5 fill-[#ACD638] text-[#ACD638]" />
+                        {featured.rating}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500">{featured.titulo}</p>
+                    <p className="text-[11px] text-slate-600 mt-1">
+                      <strong>Especialidades:</strong> {featured.especialidades.join(' · ')}
+                    </p>
+                    <p className="text-[11px] text-slate-600">
+                      <strong>Tipos:</strong> {featured.tiposClase.join(' | ')}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1.5">
+                      <span className="text-xs font-extrabold text-[#1E2B45] tabular-nums">
+                        Desde B/. {featured.precioBase.toFixed(2)} / clase
+                      </span>
+                      <span className="rounded-lg bg-[#ECFCCB] px-2 py-0.5 text-[10px] font-bold text-[#4E7006]">
+                        {featured.proximaSlotTexto}
+                      </span>
+                    </div>
                   </div>
                   <div className="pt-2 flex gap-2">
                     <button
                       type="button"
                       onClick={() => openBookModal(featured)}
-                      className="rounded-xl bg-[#B6E22E] px-3 py-2 text-xs font-extrabold text-[#16223B] inline-flex items-center gap-1 cursor-pointer"
+                      className="rounded-xl bg-[#B6E22E] hover:bg-[#ACD638] px-3 py-2 text-xs font-extrabold text-[#16223B] inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
                     >
                       <Calendar className="w-3.5 h-3.5" />
                       Reservar clase
@@ -212,18 +215,24 @@ export const ClassesView: React.FC<ClassesViewProps> = ({
                     <button
                       type="button"
                       onClick={() => setProfileInstructor(featured)}
-                      className="rounded-xl bg-[#F4F6F9] px-2.5 py-2 text-xs font-bold text-[#273758] inline-flex items-center gap-1 cursor-pointer"
+                      className="rounded-xl bg-[#F4F6F9] hover:bg-slate-200 px-2.5 py-2 text-xs font-bold text-[#273758] inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
                     >
                       <Info className="w-3.5 h-3.5" />
                       Ver perfil
                     </button>
                   </div>
                 </div>
-                <div className="w-[36%] bg-gradient-to-b from-[#1D2D4E] to-[#273758] flex flex-col items-center justify-center p-2 text-white">
-                  <PlayerAvatar nombre={featured.nombre} seed={featured.avatarSeed} size="lg" ringLime />
-                  <span className="mt-2 text-[10px] font-bold text-[#ACD638] text-center">
-                    {featured.certificaciones[0]}
-                  </span>
+                <div
+                  className="w-[42%] -ml-4 relative overflow-hidden bg-[#1D2D4E]"
+                  style={{ clipPath: 'polygon(14% 0, 100% 0, 100% 100%, 0% 100%)' }}
+                >
+                  <img
+                    src={resolveAvatarPhoto(featured.nombre, featured.avatarSeed, undefined, true)}
+                    alt={featured.nombre}
+                    loading="eager"
+                    decoding="async"
+                    className="w-full h-full object-cover object-top block select-none"
+                  />
                 </div>
               </div>
             )}
@@ -238,7 +247,13 @@ export const ClassesView: React.FC<ClassesViewProps> = ({
                   className="rounded-2xl bg-white p-3 shadow-sm border border-slate-100 flex items-center justify-between gap-2.5"
                 >
                   <div className="flex items-start gap-2.5 min-w-0">
-                    <PlayerAvatar nombre={inst.nombre} seed={inst.avatarSeed} size="md" />
+                    <PlayerAvatar
+                      nombre={inst.nombre}
+                      seed={inst.avatarSeed}
+                      size="lg"
+                      shape="rounded"
+                      isInstructor
+                    />
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
                         <h4 className="text-xs font-extrabold text-[#1E2B45] truncate">
@@ -289,23 +304,32 @@ export const ClassesView: React.FC<ClassesViewProps> = ({
                 return (
                   <div
                     key={cl.id}
-                    className="rounded-2xl bg-white p-3.5 shadow-sm border border-slate-100 flex items-center justify-between gap-2"
+                    className="rounded-2xl bg-white p-3.5 shadow-sm border border-slate-100 flex items-center justify-between gap-2.5"
                   >
-                    <div>
-                      <h4 className="text-xs font-extrabold text-[#1E2B45]">{cl.titulo}</h4>
-                      <p className="text-[11px] text-slate-500">
-                        {inst?.nombre} · {sede?.nombre}
-                      </p>
-                      <p className="text-[11px] text-slate-600 tabular-nums mt-0.5">
-                        {cl.fecha} · {formatHour12(cl.horaInicio)} · {cl.alumnosIds.length}/{cl.cupoMax} cupos · B/.{' '}
-                        {cl.precioPorCupo.toFixed(2)}
-                      </p>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <PlayerAvatar
+                        nombre={inst?.nombre || 'Instructor'}
+                        seed={inst?.avatarSeed}
+                        size="md"
+                        shape="rounded"
+                        isInstructor
+                      />
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-extrabold text-[#1E2B45] truncate">{cl.titulo}</h4>
+                        <p className="text-[11px] text-slate-500 truncate">
+                          {inst?.nombre} · {sede?.nombre}
+                        </p>
+                        <p className="text-[11px] text-slate-600 tabular-nums mt-0.5">
+                          {cl.fecha} · {formatHour12(cl.horaInicio)} · {cl.alumnosIds.length}/{cl.cupoMax} cupos · B/.{' '}
+                          {cl.precioPorCupo.toFixed(2)}
+                        </p>
+                      </div>
                     </div>
                     <button
                       type="button"
                       disabled={enrolled}
                       onClick={() => enrollInExistingClass(cl.id)}
-                      className={`rounded-xl px-3 py-2 text-xs font-extrabold cursor-pointer ${
+                      className={`shrink-0 rounded-xl px-3 py-2 text-xs font-extrabold cursor-pointer ${
                         enrolled ? 'bg-[#273758] text-white' : 'bg-[#B6E22E] text-[#16223B]'
                       }`}
                     >
@@ -329,13 +353,22 @@ export const ClassesView: React.FC<ClassesViewProps> = ({
                 const sede = state.sedes.find((s) => s.id === cl.sedeId);
                 const cancha = state.canchas.find((c) => c.id === cl.canchaId);
                 return (
-                  <div key={cl.id} className="rounded-2xl bg-white p-4 shadow-sm border border-slate-100 space-y-1.5">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <span className="text-[11px] font-bold text-[#5E8210]">{cl.tipo} · {cl.estado}</span>
-                        <h3 className="text-sm font-extrabold text-[#1E2B45]">{cl.titulo}</h3>
+                  <div key={cl.id} className="rounded-2xl bg-white p-4 shadow-sm border border-slate-100 space-y-2">
+                    <div className="flex justify-between items-start gap-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <PlayerAvatar
+                          nombre={inst?.nombre || 'Instructor'}
+                          seed={inst?.avatarSeed}
+                          size="md"
+                          shape="rounded"
+                          isInstructor
+                        />
+                        <div className="min-w-0">
+                          <span className="text-[11px] font-bold text-[#5E8210]">{cl.tipo} · {cl.estado}</span>
+                          <h3 className="text-sm font-extrabold text-[#1E2B45] truncate">{cl.titulo}</h3>
+                        </div>
                       </div>
-                      <span className="text-xs font-extrabold text-[#273758] tabular-nums">
+                      <span className="text-xs font-extrabold text-[#273758] tabular-nums shrink-0">
                         B/. {cl.precioPorCupo.toFixed(2)}
                       </span>
                     </div>
@@ -346,7 +379,7 @@ export const ClassesView: React.FC<ClassesViewProps> = ({
                       <Clock className="w-3.5 h-3.5" />
                       {cl.fecha} · {formatHour12(cl.horaInicio)} ({cl.duracionMin} min)
                     </p>
-                    <p className="text-[11px] text-[#4E7006] flex items-center gap-1 pt-1">
+                    <p className="text-[11px] text-[#4E7006] flex items-center gap-1 pt-0.5">
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       Cancha e instructor bloqueados simultáneamente en agenda
                     </p>
@@ -363,7 +396,12 @@ export const ClassesView: React.FC<ClassesViewProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4">
           <div className="w-full max-w-[380px] rounded-3xl bg-white p-5 space-y-3">
             <div className="flex items-center gap-3">
-              <PlayerAvatar nombre={profileInstructor.nombre} seed={profileInstructor.avatarSeed} size="lg" />
+              <PlayerAvatar
+                nombre={profileInstructor.nombre}
+                seed={profileInstructor.avatarSeed}
+                size="lg"
+                isInstructor
+              />
               <div>
                 <h3 className="text-base font-extrabold text-[#1E2B45]">{profileInstructor.nombre}</h3>
                 <p className="text-xs text-slate-500">{profileInstructor.titulo}</p>
@@ -405,12 +443,23 @@ export const ClassesView: React.FC<ClassesViewProps> = ({
       {selectedInstructor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="w-full max-w-[400px] max-h-[88dvh] overflow-y-auto rounded-3xl bg-white p-5 space-y-3.5">
-            <h3 className="text-base font-extrabold text-[#1E2B45]">
-              Reservar clase con {selectedInstructor.nombre}
-            </h3>
-            <p className="text-[11px] text-slate-500">
-              Disponibilidad cruzada en tiempo real: se validan y bloquean instructor y cancha juntos.
-            </p>
+            <div className="flex items-center gap-3">
+              <PlayerAvatar
+                nombre={selectedInstructor.nombre}
+                seed={selectedInstructor.avatarSeed}
+                size="md"
+                isInstructor
+                ringLime
+              />
+              <div>
+                <h3 className="text-base font-extrabold text-[#1E2B45]">
+                  Reservar clase con {selectedInstructor.nombre}
+                </h3>
+                <p className="text-[11px] text-slate-500">
+                  Disponibilidad cruzada en tiempo real: se validan y bloquean instructor y cancha juntos.
+                </p>
+              </div>
+            </div>
 
             <div>
               <label className="block text-xs font-bold text-[#1E2B45] mb-1">Sede autorizada</label>

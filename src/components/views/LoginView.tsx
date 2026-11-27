@@ -49,47 +49,53 @@ export const LoginView: React.FC = () => {
   };
 
   return (
-    <div className="min-h-full flex flex-col justify-between relative overflow-hidden bg-gradient-to-b from-[#172442] via-[#223458] to-[#13203A] text-white px-6 py-8">
-      {/* Subtle diagonal lime streak & tennis court backdrop */}
-      <svg
-        viewBox="0 0 480 800"
-        className="absolute inset-0 w-full h-full pointer-events-none select-none"
-        preserveAspectRatio="xMidYMid slice"
+    <div className="min-h-full flex flex-col justify-between relative overflow-hidden bg-gradient-to-b from-[#131F3A] via-[#1B2C4E] to-[#121D34] text-white px-6 py-8">
+      {/* Top welcome hero photography (bienvenida.webp) blended into deep navy */}
+      <div
         aria-hidden="true"
+        className="pointer-events-none select-none absolute inset-x-0 top-0 h-52 overflow-hidden"
       >
-        <defs>
-          <linearGradient id="limeDiag" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#ACD638" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="#ACD638" stopOpacity="0" />
-          </linearGradient>
-          <radialGradient id="ballGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#ACD638" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="#ACD638" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-        <polygon points="350,0 385,0 265,240 245,240" fill="url(#limeDiag)" opacity="0.65" />
-        <circle cx="430" cy="185" r="95" fill="url(#ballGlow)" />
-        <circle cx="435" cy="182" r="64" fill="#9ECA2C" opacity="0.22" />
-        <path
-          d="M395 132 Q425 180 395 228"
-          stroke="#FFFFFF"
-          strokeWidth="3"
-          fill="none"
-          opacity="0.25"
+        <img
+          src="/assets/photos/fondos/bienvenida.webp"
+          alt=""
+          aria-hidden="true"
+          decoding="async"
+          className="w-full h-full object-cover object-center opacity-90"
         />
-        {/* Bottom hardcourt perspective */}
-        <polygon points="0,715 480,695 480,800 0,800" fill="#1D4ED8" opacity="0.28" />
-        <line x1="0" y1="738" x2="480" y2="718" stroke="#FFFFFF" strokeWidth="2.5" opacity="0.35" />
-        <line x1="0" y1="775" x2="480" y2="758" stroke="#ACD638" strokeWidth="3" opacity="0.25" />
-      </svg>
+        <div className="absolute inset-0 bg-gradient-to-b from-[#131F3A]/45 via-[#172442]/55 to-[#1A2949]" />
+        <div className="absolute inset-0 bg-radial from-transparent via-[#131F3A]/20 to-[#131F3A]/65" />
+      </div>
 
-      <div className="relative z-10 flex flex-col items-center mt-2">
-        <BrandLogo size="lg" className="h-28 w-auto drop-shadow-xl" />
+      {/* Subtle corporate lime diagonal accent */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none select-none absolute -top-8 right-[104px] w-7 h-56 bg-gradient-to-b from-[#B6E22E] via-[#ACD638]/45 to-transparent rotate-[26deg] opacity-65"
+      />
 
-        <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-white text-center">
+      {/* Bottom hardcourt court-line corporate backdrop (fondo_03.webp) */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none select-none absolute inset-x-0 bottom-0 h-28 overflow-hidden"
+      >
+        <img
+          src="/assets/photos/fondos/fondo_03.webp"
+          alt=""
+          aria-hidden="true"
+          decoding="async"
+          className="w-full h-full object-cover object-center opacity-65"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#15223E] via-[#15223E]/60 to-[#121D34]/60" />
+      </div>
+
+      <div className="relative z-10 flex flex-col items-center mt-1">
+        <div className="rounded-full p-2 bg-[#131F3A]/35 backdrop-blur-[2px]">
+          <BrandLogo size="lg" className="h-28 w-auto drop-shadow-2xl" />
+        </div>
+
+        <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-white text-center drop-shadow-sm">
           {mode === 'login' ? '¡Bienvenido!' : 'Crear cuenta'}
         </h1>
-        <p className="mt-1.5 text-sm text-white/80 text-center max-w-[300px] leading-snug">
+        <p className="mt-1.5 text-sm text-white/85 text-center max-w-[300px] leading-snug">
           {mode === 'login'
             ? 'Accede a tu cuenta para reservar canchas, unirte a partidos, tomar clases y más.'
             : 'Regístrate para jugar en canchas públicas y privadas de todo Panamá.'}
@@ -305,8 +311,8 @@ export const LoginView: React.FC = () => {
       </div>
 
       {/* Demo profile quick switcher */}
-      <div className="relative z-10 mt-6 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/15 p-3">
-        <p className="text-[11px] font-semibold text-white/80 text-center mb-2">
+      <div className="relative z-10 mt-6 rounded-2xl bg-[#0F1B35]/80 backdrop-blur-md border border-white/15 p-3 shadow-lg">
+        <p className="text-[11px] font-semibold text-white/85 text-center mb-2">
           Acceso directo Modo Demostración (sin credenciales reales)
         </p>
         <div className="grid grid-cols-4 gap-1.5">
@@ -322,7 +328,7 @@ export const LoginView: React.FC = () => {
               key={roleKey}
               type="button"
               onClick={() => handleQuickRole(roleKey)}
-              className="rounded-xl bg-white/15 hover:bg-[#ACD638] hover:text-[#16223B] py-2 text-[11px] font-bold text-white transition cursor-pointer"
+              className="rounded-xl bg-[#1D2F52]/90 border border-white/10 hover:bg-[#ACD638] hover:text-[#16223B] py-2 text-[11px] font-bold text-white transition cursor-pointer"
             >
               {label}
             </button>

@@ -103,6 +103,7 @@ export const CourtDetailView: React.FC<CourtDetailViewProps> = ({
   return (
     <div className="flex flex-col min-h-full bg-[#F4F6F9]">
       <HeaderBar
+        variant="net"
         onBack={onBack}
         onOpenMenu={onOpenMenu}
         onOpenNotifications={onOpenNotifications}
@@ -111,7 +112,14 @@ export const CourtDetailView: React.FC<CourtDetailViewProps> = ({
 
       {/* Court Carousel */}
       <div className="relative h-48 bg-[#18243E]">
-        <CourtScene variant={sede.imagenVariant} clubLabel={sede.nombre} />
+        <CourtScene
+          sedeId={sede.id}
+          isPublic={sede.tipo === 'Pública'}
+          variant={sede.imagenVariant}
+          photoIndex={slideIdx}
+          clubLabel={sede.nombre}
+          eager
+        />
         <span className="absolute top-3 right-3 rounded-full bg-black/55 px-2.5 py-0.5 text-[11px] font-bold text-white tabular-nums">
           {slideIdx + 1} / 5
         </span>

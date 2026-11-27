@@ -12,23 +12,53 @@ export const SplashScreen: React.FC<{ onDone: () => void }> = ({ onDone }) => {
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && onDone()}
       aria-label="Omitir pantalla de inicio"
-      className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-b from-[#1A2744] via-[#273758] to-[#16213B] text-white px-6 cursor-pointer"
+      className="absolute inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-[#131F3A] via-[#1E2F52] to-[#121D34] text-white px-6 cursor-pointer"
     >
-      <div className="relative flex flex-col items-center">
-        <div className="w-40 h-40 flex items-center justify-center">
+      {/* Welcome hero horizon (bienvenida.webp) */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none select-none absolute inset-x-0 top-0 h-56 overflow-hidden"
+      >
+        <img
+          src="/assets/photos/fondos/bienvenida.webp"
+          alt=""
+          aria-hidden="true"
+          decoding="async"
+          className="w-full h-full object-cover object-center opacity-85"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#131F3A]/40 via-[#172442]/60 to-[#1E2F52]" />
+      </div>
+
+      {/* Bottom corporate court lines (fondo_03.webp) */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none select-none absolute inset-x-0 bottom-0 h-32 overflow-hidden"
+      >
+        <img
+          src="/assets/photos/fondos/fondo_03.webp"
+          alt=""
+          aria-hidden="true"
+          decoding="async"
+          className="w-full h-full object-cover object-center opacity-70"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#14203B] via-[#14203B]/55 to-[#121D34]/40" />
+      </div>
+
+      <div className="relative z-10 flex flex-col items-center">
+        <div className="w-40 h-40 flex items-center justify-center rounded-full bg-[#131F3A]/40 backdrop-blur-[2px]">
           <BrandLogo size="lg" className="h-32 w-auto drop-shadow-2xl" />
         </div>
-        <h1 className="mt-4 text-xl font-extrabold tracking-tight text-white">
+        <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-white">
           Tenis Club Panamá
         </h1>
-        <p className="mt-1 text-xs font-medium text-[#ACD638]">
+        <p className="mt-1 text-xs font-semibold text-[#ACD638]">
           Canchas · Comunidad · Clases · Ranking
         </p>
         <div className="mt-8 w-32 h-1.5 rounded-full bg-white/15 overflow-hidden">
           <div className="h-full w-2/3 bg-[#ACD638] rounded-full animate-pulse" />
         </div>
       </div>
-      <span className="absolute bottom-8 text-[11px] text-white/60">
+      <span className="relative z-10 mt-12 text-[11px] font-medium text-white/70">
         Toca para continuar
       </span>
     </div>
@@ -57,10 +87,25 @@ export const PWAInstallButton: React.FC<{ compact?: boolean }> = ({ compact = fa
         className={
           compact
             ? 'inline-flex items-center gap-1.5 rounded-xl bg-[#ACD638] px-3 py-2 text-xs font-bold text-[#1A2640] hover:brightness-95 transition whitespace-nowrap shrink-0'
-            : 'w-full flex items-center justify-between gap-3 rounded-2xl bg-[#273758] px-4 py-3 text-left text-white shadow-sm hover:bg-[#1E2B45] transition'
+            : 'relative overflow-hidden w-full flex items-center justify-between gap-3 rounded-2xl bg-[#273758] px-4 py-3 text-left text-white shadow-sm hover:bg-[#1E2B45] transition'
         }
       >
-        <span className="flex items-center gap-2.5">
+        {!compact && (
+          <div
+            aria-hidden="true"
+            className="pointer-events-none select-none absolute inset-0"
+          >
+            <img
+              src="/assets/photos/fondos/fondo_03.webp"
+              alt=""
+              aria-hidden="true"
+              decoding="async"
+              className="w-full h-full object-cover object-right opacity-30"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#273758] via-[#273758]/85 to-[#273758]/45" />
+          </div>
+        )}
+        <span className="relative z-10 flex items-center gap-2.5">
           <span className="w-8 h-8 rounded-xl bg-[#ACD638]/20 text-[#ACD638] flex items-center justify-center shrink-0">
             {isIOS ? <Smartphone className="w-4 h-4" /> : <Download className="w-4 h-4" />}
           </span>
@@ -69,14 +114,14 @@ export const PWAInstallButton: React.FC<{ compact?: boolean }> = ({ compact = fa
               {compact ? 'Instalar app' : 'Instalar Tenis Club Panamá'}
             </span>
             {!compact && (
-              <span className="block text-[11px] text-white/75">
+              <span className="block text-[11px] text-white/80">
                 Acceso directo en pantalla de inicio (PWA)
               </span>
             )}
           </span>
         </span>
         {!compact && (
-          <span className="rounded-lg bg-[#ACD638] px-2.5 py-1 text-xs font-bold text-[#1A2640]">
+          <span className="relative z-10 rounded-lg bg-[#ACD638] px-2.5 py-1 text-xs font-bold text-[#1A2640]">
             Instalar
           </span>
         )}

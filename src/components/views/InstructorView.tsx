@@ -65,6 +65,7 @@ export const InstructorView: React.FC<InstructorViewProps> = ({
   return (
     <div className="flex flex-col min-h-full bg-[#F4F6F9]">
       <HeaderBar
+        variant="net"
         onOpenMenu={onOpenMenu}
         onOpenNotifications={onOpenNotifications}
         onOpenChat={onOpenChat}
@@ -82,8 +83,21 @@ export const InstructorView: React.FC<InstructorViewProps> = ({
               Cambiar a Jugador
             </button>
           </div>
-          <h1 className="mt-1.5 text-2xl font-extrabold text-white">{instProfile.nombre}</h1>
-          <p className="text-xs text-white/80">{instProfile.titulo}</p>
+          <div className="mt-2 flex items-center gap-3">
+            <PlayerAvatar
+              nombre={instProfile.nombre}
+              seed={instProfile.avatarSeed}
+              size="lg"
+              isInstructor
+              ringLime
+            />
+            <div className="min-w-0">
+              <h1 className="text-2xl font-extrabold text-white leading-tight truncate">
+                {instProfile.nombre}
+              </h1>
+              <p className="text-xs text-white/80 truncate">{instProfile.titulo}</p>
+            </div>
+          </div>
         </div>
       </HeaderBar>
 
@@ -231,6 +245,24 @@ export const InstructorView: React.FC<InstructorViewProps> = ({
 
         {activeTab === 'perfil' && (
           <div className="space-y-3">
+            <div className="rounded-2xl bg-white p-4 shadow-sm border border-slate-100 flex items-center gap-3">
+              <PlayerAvatar
+                nombre={instProfile.nombre}
+                seed={instProfile.avatarSeed}
+                size="lg"
+                shape="rounded"
+                isInstructor
+              />
+              <div className="min-w-0">
+                <h2 className="text-sm font-extrabold text-[#1E2B45] truncate">
+                  {instProfile.nombre}
+                </h2>
+                <p className="text-xs text-slate-500 truncate">{instProfile.titulo}</p>
+                <p className="text-[11px] font-bold text-[#5E8210] mt-0.5">
+                  ★ {instProfile.rating} · {instProfile.certificaciones.join(' · ')}
+                </p>
+              </div>
+            </div>
             <div className="rounded-2xl bg-white p-4 shadow-sm border border-slate-100 space-y-2">
               <h2 className="text-sm font-extrabold text-[#1E2B45]">Tarifa base por hora</h2>
               <div className="flex items-center gap-2">

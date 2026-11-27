@@ -18,7 +18,7 @@ import { DEMO_DATES } from '../../../data/seedData';
 import type { Modality, PaymentMethod, Reserva } from '../../../types/tennis';
 import { calculateBookingTotals, formatHour12, minutesToTime, timeToMinutes } from '../../../utils/tennisLogic';
 import { HeaderBar } from '../../HeaderBar';
-import { CourtScene, DemoQRCode } from '../../VisualAssets';
+import { CourtScene, DemoQRCode, PlayerAvatar } from '../../VisualAssets';
 
 interface BookingCheckoutViewProps {
   selection: {
@@ -106,6 +106,7 @@ export const BookingCheckoutView: React.FC<BookingCheckoutViewProps> = ({
   return (
     <div className="flex flex-col min-h-full bg-[#F4F6F9]">
       <HeaderBar
+        variant="lines"
         onBack={confirmedReserva ? undefined : onBack}
         onOpenMenu={onOpenMenu}
         onOpenNotifications={onOpenNotifications}
@@ -268,24 +269,58 @@ export const BookingCheckoutView: React.FC<BookingCheckoutViewProps> = ({
                 className="w-[42%] -ml-3 relative"
                 style={{ clipPath: 'polygon(18% 0, 100% 0, 100% 100%, 0% 100%)' }}
               >
-                <CourtScene variant={sede.imagenVariant} clubLabel={sede.nombre} />
+                <CourtScene
+                  sedeId={sede.id}
+                  isPublic={sede.tipo === 'Pública'}
+                  variant={sede.imagenVariant}
+                  clubLabel={sede.nombre}
+                  eager
+                />
               </div>
             </div>
 
             {/* Players row */}
             <div className="rounded-2xl bg-white p-3.5 shadow-sm border border-slate-100">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-extrabold text-[#1E2B45] flex items-center gap-1.5">
+                <span className="text-xs font-extrabold text-[#1E2B45] flex items-center gap-1.5 shrink-0">
                   <Users className="w-4 h-4 text-[#273758]" />
                   Jugadores
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setEditingPlayers((v) => !v)}
-                  className="text-xs font-semibold text-[#273758] underline cursor-pointer"
-                >
-                  {editingPlayers ? 'Listo' : playersText}
-                </button>
+                <div className="flex items-center gap-2 min-w-0">
+                  {!editingPlayers && (
+                    <div className="flex items-center -space-x-1.5 shrink-0">
+                      {playersText
+                        .split(',')
+                        .map((s) => s.trim())
+                        .filter(Boolean)
+                        .slice(0, 4)
+                        .map((part, idx) => {
+                          const norm = part.toLowerCase();
+                          const matched = state.usuarios.find(
+                            (u) =>
+                              u.nombre.toLowerCase() === norm ||
+                              u.nombre.toLowerCase().startsWith(`${norm} `)
+                          );
+                          return (
+                            <PlayerAvatar
+                              key={`${part}-${idx}`}
+                              nombre={matched?.nombre || part}
+                              seed={matched?.avatarSeed || part.split(' ')[0]}
+                              avatarUrl={matched?.avatarUrl}
+                              size="xs"
+                            />
+                          );
+                        })}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setEditingPlayers((v) => !v)}
+                    className="text-xs font-semibold text-[#273758] underline cursor-pointer truncate"
+                  >
+                    {editingPlayers ? 'Listo' : playersText}
+                  </button>
+                </div>
               </div>
               {editingPlayers && (
                 <input

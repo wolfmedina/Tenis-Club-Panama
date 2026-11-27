@@ -109,20 +109,20 @@ export const AppShell: React.FC = () => {
 
   return (
     <div className="h-dvh w-full desktop-court-backdrop relative flex justify-center overflow-hidden">
-      {/* Subtle geometric tennis court lines in desktop lateral areas */}
-      <svg
-        viewBox="0 0 1440 900"
-        className="hidden sm:block fixed inset-0 w-full h-full pointer-events-none select-none opacity-20"
-        preserveAspectRatio="xMidYMid slice"
+      {/* Subtle corporate court-lines photography in desktop lateral areas */}
+      <div
         aria-hidden="true"
+        className="hidden sm:block fixed inset-0 pointer-events-none select-none"
       >
-        <rect x="70" y="90" width="320" height="720" fill="none" stroke="#FFFFFF" strokeWidth="2" />
-        <line x1="70" y1="450" x2="390" y2="450" stroke="#ACD638" strokeWidth="2.5" />
-        <line x1="230" y1="220" x2="230" y2="680" stroke="#FFFFFF" strokeWidth="1.5" />
-        <rect x="1050" y="90" width="320" height="720" fill="none" stroke="#FFFFFF" strokeWidth="2" />
-        <line x1="1050" y1="450" x2="1370" y2="450" stroke="#ACD638" strokeWidth="2.5" />
-        <line x1="1210" y1="220" x2="1210" y2="680" stroke="#FFFFFF" strokeWidth="1.5" />
-      </svg>
+        <img
+          src="/assets/photos/fondos/fondo_03.webp"
+          alt=""
+          aria-hidden="true"
+          decoding="async"
+          className="w-full h-full object-cover object-center opacity-20"
+        />
+        <div className="absolute inset-0 bg-radial from-transparent via-[#16223B]/55 to-[#10192D]/90" />
+      </div>
 
       {/* Centered 480px Vertical PWA Container */}
       <div className="w-full max-w-[480px] h-dvh bg-[#F4F6F9] relative flex flex-col shadow-2xl overflow-hidden">
