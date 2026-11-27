@@ -25,7 +25,6 @@ export const ExploreCourtsView: React.FC<ExploreCourtsViewProps> = ({
   const [query, setQuery] = useState(initialQuery);
   const [provincia, setProvincia] = useState<string>('Todas');
   const [tipo, setTipo] = useState<'Todas' | 'Pública' | 'Privada'>('Todas');
-  const [soloGratuitas, setSoloGratuitas] = useState(false);
   const [soloIluminacion, setSoloIluminacion] = useState(false);
   const [soloFavoritos, setSoloFavoritos] = useState(false);
   const [viewMode, setViewMode] = useState<'lista' | 'mapa'>('lista');
@@ -38,7 +37,6 @@ export const ExploreCourtsView: React.FC<ExploreCourtsViewProps> = ({
       if (soloFavoritos && !currentUser.favoritosSedes.includes(sede.id)) return false;
 
       const courts = state.canchas.filter((c) => c.sedeId === sede.id);
-      if (soloGratuitas && !courts.some((c) => c.precioHora === 0)) return false;
       if (soloIluminacion && !courts.some((c) => c.iluminacion)) return false;
 
       if (query.trim()) {
@@ -52,7 +50,7 @@ export const ExploreCourtsView: React.FC<ExploreCourtsViewProps> = ({
       }
       return true;
     });
-  }, [state.sedes, state.canchas, provincia, tipo, soloGratuitas, soloIluminacion, soloFavoritos, query, currentUser.favoritosSedes]);
+  }, [state.sedes, state.canchas, provincia, tipo, soloIluminacion, soloFavoritos, query, currentUser.favoritosSedes]);
 
   return (
     <div className="flex flex-col min-h-full bg-[#F4F6F9]">
@@ -133,16 +131,6 @@ export const ExploreCourtsView: React.FC<ExploreCourtsViewProps> = ({
               <option value="Pública">Públicas</option>
               <option value="Privada">Privadas</option>
             </select>
-
-            <button
-              type="button"
-              onClick={() => setSoloGratuitas((v) => !v)}
-              className={`shrink-0 rounded-xl px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
-                soloGratuitas ? 'bg-[#ACD638] text-[#16223B]' : 'bg-white/15 text-white'
-              }`}
-            >
-              Gratuitas (B/. 0)
-            </button>
 
             <button
               type="button"
@@ -286,7 +274,7 @@ export const ExploreCourtsView: React.FC<ExploreCourtsViewProps> = ({
                     <div>
                       <span className="text-[11px] text-slate-500 block">Tarifa por hora</span>
                       <span className="text-sm font-extrabold text-[#273758] tabular-nums">
-                        {minPrice === 0 ? 'Gratuita (B/. 0.00)' : `Desde B/. ${minPrice.toFixed(2)}`}
+                        {`Desde B/. ${minPrice.toFixed(2)}`}
                       </span>
                     </div>
                     <button

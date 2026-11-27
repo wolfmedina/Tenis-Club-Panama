@@ -209,7 +209,7 @@ export const PlayerHomeView: React.FC<PlayerHomeNavProps> = ({
                       ¿Listo para tu próximo set?
                     </h2>
                     <p className="mt-1 text-xs text-slate-500">
-                      Encuentra canchas públicas gratuitas o privadas en tu zona.
+                      Encuentra canchas públicas desde B/. 6/h o clubes privados en tu zona.
                     </p>
                   </div>
                   <button
@@ -375,7 +375,7 @@ export const PlayerHomeView: React.FC<PlayerHomeNavProps> = ({
                         <span className="font-normal text-slate-400">({sede.resenasCount})</span>
                       </span>
                       <span className="font-bold text-[#273758] tabular-nums">
-                        {minPrice === 0 ? 'B/. 0+' : `B/. ${minPrice}`}
+                        {`B/. ${minPrice}`}
                       </span>
                     </div>
                   </button>

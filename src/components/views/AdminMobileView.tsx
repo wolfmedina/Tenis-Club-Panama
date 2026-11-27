@@ -25,8 +25,21 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { DEMO_DATES, TIME_SLOTS } from '../../data/seedData';
-import type { AdminSubRole, Modality } from '../../types/tennis';
-import { computeAdminMetrics, formatHour12, isSlotAvailable } from '../../utils/tennisLogic';
+import type {
+  AdminSubRole,
+  Cancha,
+  DayGroup,
+  Modality,
+  PaymentMethod,
+  TarifaRegla,
+} from '../../types/tennis';
+import {
+  calculateBookingTotals,
+  computeAdminMetrics,
+  formatHour12,
+  isSlotAvailable,
+  validateCourtRates,
+} from '../../utils/tennisLogic';
 import { HeaderBar } from '../HeaderBar';
 import { PlayerAvatar } from '../VisualAssets';
 
@@ -54,6 +67,7 @@ export const AdminMobileView: React.FC<AdminMobileViewProps> = ({
     switchSede,
     switchRole,
     toggleCourtStatus,
+    updateCourtRates,
     createReservation,
     cancelReservation,
     rescheduleReservation,
@@ -78,6 +92,7 @@ export const AdminMobileView: React.FC<AdminMobileViewProps> = ({
   const [showNotifyModal, setShowNotifyModal] = useState(false);
   const [showMaintModal, setShowMaintModal] = useState(false);
   const [showClassModal, setShowClassModal] = useState(false);
+  const [editingTarifaCancha, setEditingTarifaCancha] = useState<Cancha | null>(null);
 
   // Form states
   const sedeCanchas = useMemo(
@@ -87,9 +102,25 @@ export const AdminMobileView: React.FC<AdminMobileViewProps> = ({
 
   const [manCanchaId, setManCanchaId] = useState(sedeCanchas[0]?.id || '');
   const [manHora, setManHora] = useState('16:30');
+  const [manDuracion, setManDuracion] = useState<60 | 90>(60);
   const [manJugador, setManJugador] = useState('Roberto Díaz (Presencial)');
   const [manModalidad, setManModalidad] = useState<Modality>('Dobles');
+  const [manMetodo, setManMetodo] = useState<PaymentMethod>('Tarjeta');
   const [manError, setManError] = useState('');
+
+  // Tariff editor state
+  const [tarifaBase, setTarifaBase] = useState('');
+  const [tarifaNocturna, setTarifaNocturna] = useState('');
+  const [tarifa60, setTarifa60] = useState('');
+  const [tarifa90, setTarifa90] = useState('');
+  const [tarifa120, setTarifa120] = useState('');
+  const [tarifaReglas, setTarifaReglas] = useState<TarifaRegla[]>([]);
+  const [reglaDias, setReglaDias] = useState<DayGroup>('Fines de semana');
+  const [reglaDesde, setReglaDesde] = useState('18:00');
+  const [reglaHasta, setReglaHasta] = useState('22:00');
+  const [reglaDuracion, setReglaDuracion] = useState<'' | '60' | '90' | '120'>('');
+  const [reglaPrecio, setReglaPrecio] = useState('');
+  const [tarifaError, setTarifaError] = useState('');
 
   const [qrCodeInput, setQrCodeInput] = useState('TCP-2401');
   const [qrResult, setQrResult] = useState<{ ok: boolean; message: string } | null>(null);
@@ -160,10 +191,10 @@ export const AdminMobileView: React.FC<AdminMobileViewProps> = ({
       canchaId: targetCanchaId,
       fecha: selectedDate,
       horaInicio: manHora,
-      duracionMin: 60,
+      duracionMin: manDuracion,
       modalidad: manModalidad,
       participantes: [manJugador],
-      metodoPago: 'Tarjeta',
+      metodoPago: manMetodo,
       tipoOrigen: 'Manual Admin',
     });
     if (!res.ok) {
@@ -171,7 +202,70 @@ export const AdminMobileView: React.FC<AdminMobileViewProps> = ({
       return;
     }
     setShowManualBooking(false);
-    showToast('Reserva manual registrada en agenda');
+    showToast('Reserva manual pagada y bloqueada en agenda');
+  };
+
+  const openTarifaEditor = (c: Cancha) => {
+    setEditingTarifaCancha(c);
+    setTarifaBase(String(c.precioHora));
+    setTarifaNocturna(c.precioNocturno !== undefined ? String(c.precioNocturno) : '');
+    setTarifa60(c.preciosPorDuracion?.[60] !== undefined ? String(c.preciosPorDuracion[60]) : '');
+    setTarifa90(c.preciosPorDuracion?.[90] !== undefined ? String(c.preciosPorDuracion[90]) : '');
+    setTarifa120(c.preciosPorDuracion?.[120] !== undefined ? String(c.preciosPorDuracion[120]) : '');
+    setTarifaReglas(c.tarifasPersonalizadas ? [...c.tarifasPersonalizadas] : []);
+    setReglaPrecio('');
+    setTarifaError('');
+  };
+
+  const handleAddTarifaRegla = () => {
+    setTarifaError('');
+    const parsed = Number(reglaPrecio);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      setTarifaError('La tarifa de la regla debe ser mayor a B/. 0.00.');
+      return;
+    }
+    const newRegla: TarifaRegla = {
+      id: `reg_${Date.now()}`,
+      dias: reglaDias,
+      horaDesde: reglaDesde,
+      horaHasta: reglaHasta,
+      duracionMin: reglaDuracion ? (Number(reglaDuracion) as 60 | 90 | 120) : undefined,
+      precioHora: parsed,
+    };
+    const nextCheck = validateCourtRates({
+      precioHora: Number(tarifaBase) || 1,
+      tarifasPersonalizadas: [...tarifaReglas, newRegla],
+    });
+    if (!nextCheck.valid) {
+      setTarifaError(nextCheck.error || 'Regla inválida');
+      return;
+    }
+    setTarifaReglas((prev) => [...prev, newRegla]);
+    setReglaPrecio('');
+  };
+
+  const handleSaveTarifas = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTarifaCancha) return;
+    setTarifaError('');
+    const parsedBase = Number(tarifaBase);
+    const parsedNoct = tarifaNocturna.trim() !== '' ? Number(tarifaNocturna) : undefined;
+    const durMap: Partial<Record<60 | 90 | 120, number>> = {};
+    if (tarifa60.trim() !== '') durMap[60] = Number(tarifa60);
+    if (tarifa90.trim() !== '') durMap[90] = Number(tarifa90);
+    if (tarifa120.trim() !== '') durMap[120] = Number(tarifa120);
+
+    const res = updateCourtRates(editingTarifaCancha.id, {
+      precioHora: parsedBase,
+      precioNocturno: parsedNoct,
+      preciosPorDuracion: Object.keys(durMap).length > 0 ? durMap : undefined,
+      tarifasPersonalizadas: tarifaReglas.length > 0 ? tarifaReglas : undefined,
+    });
+    if (!res.ok) {
+      setTarifaError(res.error || 'No se pudo guardar la tarifa');
+      return;
+    }
+    setEditingTarifaCancha(null);
   };
 
   const firstName = currentUser.nombre.split(' ')[0];
@@ -589,7 +683,7 @@ export const AdminMobileView: React.FC<AdminMobileViewProps> = ({
                       </div>
                     </div>
                     <span className="text-xs font-extrabold text-[#273758] tabular-nums shrink-0">
-                      {r.totalPagado === 0 ? 'Gratuita' : `B/. ${r.totalPagado.toFixed(2)}`}
+                      {`B/. ${r.totalPagado.toFixed(2)}`}
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -632,32 +726,63 @@ export const AdminMobileView: React.FC<AdminMobileViewProps> = ({
 
         {activeTab === 'canchas' && (
           <div className="space-y-3">
-            <h2 className="text-base font-extrabold text-[#1E2B45]">
-              Canchas y tarifas · {activeSede.nombre}
-            </h2>
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-base font-extrabold text-[#1E2B45]">
+                Canchas y tarifas · {activeSede.nombre}
+              </h2>
+              <span className="rounded-lg bg-[#273758]/10 px-2 py-0.5 text-[10px] font-bold text-[#273758]">
+                {activeSede.tipo}
+              </span>
+            </div>
             {sedeCanchas.map((c) => {
               const isAvail = c.estado === 'Disponible';
+              const rulesCount = c.tarifasPersonalizadas?.length || 0;
               return (
-                <div key={c.id} className="rounded-2xl bg-white p-4 shadow-sm border border-slate-100 flex items-center justify-between gap-2">
-                  <div>
-                    <h3 className="text-sm font-extrabold text-[#1E2B45]">{c.nombre}</h3>
-                    <p className="text-xs text-slate-500">
-                      {c.superficie} · {c.iluminacion ? 'LED' : 'Sin LED'} ·{' '}
-                      {c.precioHora === 0 ? 'Gratuita' : `B/. ${c.precioHora}/h`}
-                    </p>
-                    {c.motivoBloqueo && (
-                      <p className="text-[11px] text-rose-600 mt-0.5">{c.motivoBloqueo}</p>
-                    )}
+                <div key={c.id} className="rounded-2xl bg-white p-4 shadow-sm border border-slate-100 space-y-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="text-sm font-extrabold text-[#1E2B45]">{c.nombre}</h3>
+                      <p className="text-xs text-slate-500">
+                        {c.superficie} · {c.iluminacion ? 'LED' : 'Sin LED'} · Base{' '}
+                        <strong className="text-[#1E2B45]">B/. {c.precioHora.toFixed(2)}/h</strong>
+                        {c.precioNocturno !== undefined && (
+                          <> · Noct. <strong className="text-[#1E2B45]">B/. {c.precioNocturno.toFixed(2)}/h</strong></>
+                        )}
+                      </p>
+                      {(c.preciosPorDuracion || rulesCount > 0) && (
+                        <p className="text-[11px] font-semibold text-[#5E8210] mt-0.5">
+                          {c.preciosPorDuracion
+                            ? `Duración: ${Object.entries(c.preciosPorDuracion)
+                                .map(([d, v]) => `${d}m B/.${Number(v).toFixed(2)}`)
+                                .join(' · ')}`
+                            : ''}
+                          {c.preciosPorDuracion && rulesCount > 0 ? ' · ' : ''}
+                          {rulesCount > 0 ? `${rulesCount} regla(s) por día/horario` : ''}
+                        </p>
+                      )}
+                      {c.motivoBloqueo && (
+                        <p className="text-[11px] text-rose-600 mt-0.5">{c.motivoBloqueo}</p>
+                      )}
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => toggleCourtStatus(c.id)}
-                    className={`rounded-xl px-3.5 py-2 text-xs font-extrabold cursor-pointer ${
-                      isAvail ? 'bg-[#B6E22E] text-[#16223B]' : 'bg-[#273758] text-white'
-                    }`}
-                  >
-                    {isAvail ? 'Bloquear' : 'Habilitar'}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openTarifaEditor(c)}
+                      className="flex-1 rounded-xl border border-[#273758]/20 bg-[#F4F6F9] hover:bg-slate-200 px-3 py-2 text-xs font-extrabold text-[#273758] cursor-pointer"
+                    >
+                      Configurar tarifas
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleCourtStatus(c.id)}
+                      className={`rounded-xl px-3.5 py-2 text-xs font-extrabold cursor-pointer ${
+                        isAvail ? 'bg-[#B6E22E] text-[#16223B]' : 'bg-[#273758] text-white'
+                      }`}
+                    >
+                      {isAvail ? 'Bloquear' : 'Habilitar'}
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -913,24 +1038,282 @@ export const AdminMobileView: React.FC<AdminMobileViewProps> = ({
                 required
               />
             </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs font-bold mb-1">Modalidad</label>
+                <select
+                  value={manModalidad}
+                  onChange={(e) => setManModalidad(e.target.value as Modality)}
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs"
+                >
+                  <option value="Dobles">Dobles</option>
+                  <option value="Individual">Individual</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold mb-1">Duración</label>
+                <select
+                  value={manDuracion}
+                  onChange={(e) => setManDuracion(Number(e.target.value) as 60 | 90)}
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs"
+                >
+                  <option value={60}>60 min</option>
+                  <option value={90}>90 min</option>
+                </select>
+              </div>
+            </div>
             <div>
-              <label className="block text-xs font-bold mb-1">Modalidad</label>
+              <label className="block text-xs font-bold mb-1">Método de pago confirmado</label>
               <select
-                value={manModalidad}
-                onChange={(e) => setManModalidad(e.target.value as Modality)}
+                value={manMetodo}
+                onChange={(e) => setManMetodo(e.target.value as PaymentMethod)}
                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs"
               >
-                <option value="Dobles">Dobles</option>
-                <option value="Individual">Individual</option>
+                <option value="Tarjeta">Tarjeta</option>
+                <option value="Yappy">Yappy</option>
+                <option value="Apple Pay">Apple Pay</option>
+                <option value="PayPal">PayPal</option>
               </select>
             </div>
+            {(() => {
+              const targetC = sedeCanchas.find((c) => c.id === (manCanchaId || sedeCanchas[0]?.id));
+              if (!targetC) return null;
+              const manPreview = calculateBookingTotals(
+                targetC,
+                manHora,
+                manDuracion,
+                state.serviceFeePct,
+                false,
+                selectedDate
+              );
+              return (
+                <div className="rounded-xl bg-[#F4F6F9] px-3 py-2 flex items-center justify-between text-xs">
+                  <span className="text-slate-600 font-semibold">Cobro obligatorio ({manDuracion} min)</span>
+                  <span className="font-extrabold text-[#1E2B45] tabular-nums">
+                    B/. {manPreview.totalPagado.toFixed(2)}
+                  </span>
+                </div>
+              );
+            })()}
             {manError && <p className="text-xs font-bold text-rose-600">{manError}</p>}
             <div className="flex gap-2 pt-1">
               <button type="button" onClick={() => setShowManualBooking(false)} className="flex-1 rounded-xl bg-slate-100 py-2.5 text-xs font-bold">
                 Cancelar
               </button>
               <button type="submit" className="flex-1 rounded-xl bg-[#B6E22E] py-2.5 text-xs font-extrabold text-[#16223B]">
-                Guardar reserva
+                Cobrar y bloquear
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Modal: Court Tariff Configurator */}
+      {editingTarifaCancha && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4">
+          <form
+            onSubmit={handleSaveTarifas}
+            className="w-full max-w-[410px] max-h-[88vh] overflow-y-auto rounded-3xl bg-white p-5 space-y-3"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <h3 className="text-base font-extrabold text-[#1E2B45]">
+                  Configurar tarifas · {editingTarifaCancha.nombre}
+                </h3>
+                <p className="text-[11px] text-slate-500">
+                  Todas las canchas ({activeSede.tipo.toLowerCase()}) requieren tarifa mayor a B/. 0.00.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingTarifaCancha(null)}
+                className="text-xs font-bold text-slate-400 hover:text-slate-700 cursor-pointer"
+              >
+                Cerrar
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label htmlFor="tarifa-base" className="block text-xs font-bold text-[#1E2B45] mb-1">
+                  Tarifa base / h (B/.)
+                </label>
+                <input
+                  id="tarifa-base"
+                  type="number"
+                  step="0.5"
+                  value={tarifaBase}
+                  onChange={(e) => setTarifaBase(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="tarifa-noct" className="block text-xs font-bold text-[#1E2B45] mb-1">
+                  Nocturna ≥ 6:00 p. m. (B/.)
+                </label>
+                <input
+                  id="tarifa-noct"
+                  type="number"
+                  step="0.5"
+                  value={tarifaNocturna}
+                  onChange={(e) => setTarifaNocturna(e.target.value)}
+                  placeholder="Opcional"
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold"
+                />
+              </div>
+            </div>
+
+            <div>
+              <span className="block text-xs font-bold text-[#1E2B45] mb-1">
+                Tarifas fijas por duración (opcional, B/.)
+              </span>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label htmlFor="tarifa-60" className="block text-[10px] text-slate-500 mb-0.5">60 min</label>
+                  <input
+                    id="tarifa-60"
+                    type="number"
+                    step="0.5"
+                    value={tarifa60}
+                    onChange={(e) => setTarifa60(e.target.value)}
+                    placeholder="Auto"
+                    className="w-full rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="tarifa-90" className="block text-[10px] text-slate-500 mb-0.5">90 min</label>
+                  <input
+                    id="tarifa-90"
+                    type="number"
+                    step="0.5"
+                    value={tarifa90}
+                    onChange={(e) => setTarifa90(e.target.value)}
+                    placeholder="Auto"
+                    className="w-full rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="tarifa-120" className="block text-[10px] text-slate-500 mb-0.5">120 min</label>
+                  <input
+                    id="tarifa-120"
+                    type="number"
+                    step="0.5"
+                    value={tarifa120}
+                    onChange={(e) => setTarifa120(e.target.value)}
+                    placeholder="Auto"
+                    className="w-full rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-100 pt-2.5 space-y-2">
+              <span className="block text-xs font-extrabold text-[#1E2B45]">
+                Reglas por día, horario y duración
+              </span>
+              {tarifaReglas.length > 0 && (
+                <div className="space-y-1.5">
+                  {tarifaReglas.map((reg) => (
+                    <div
+                      key={reg.id}
+                      className="flex items-center justify-between rounded-xl bg-[#F4F6F9] px-2.5 py-1.5 text-[11px]"
+                    >
+                      <span className="font-semibold text-[#1E2B45]">
+                        {reg.dias} · {reg.horaDesde}–{reg.horaHasta} ·{' '}
+                        {reg.duracionMin ? `${reg.duracionMin} min` : 'Todas'} ·{' '}
+                        <strong>B/. {reg.precioHora.toFixed(2)}/h</strong>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setTarifaReglas((prev) => prev.filter((item) => item.id !== reg.id))
+                        }
+                        className="text-rose-600 font-bold ml-2 cursor-pointer"
+                      >
+                        Quitar
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-1.5">
+                <select
+                  aria-label="Días de la regla"
+                  value={reglaDias}
+                  onChange={(e) => setReglaDias(e.target.value as DayGroup)}
+                  className="rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs"
+                >
+                  <option value="Todos">Todos los días</option>
+                  <option value="Lun-Vie">Lun–Vie</option>
+                  <option value="Fines de semana">Fines de semana</option>
+                </select>
+                <select
+                  aria-label="Duración de la regla"
+                  value={reglaDuracion}
+                  onChange={(e) => setReglaDuracion(e.target.value as '' | '60' | '90' | '120')}
+                  className="rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs"
+                >
+                  <option value="">Cualquier duración</option>
+                  <option value="60">60 min</option>
+                  <option value="90">90 min</option>
+                  <option value="120">120 min</option>
+                </select>
+                <input
+                  type="time"
+                  aria-label="Hora desde"
+                  value={reglaDesde}
+                  onChange={(e) => setReglaDesde(e.target.value)}
+                  className="rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs"
+                />
+                <input
+                  type="time"
+                  aria-label="Hora hasta"
+                  value={reglaHasta}
+                  onChange={(e) => setReglaHasta(e.target.value)}
+                  className="rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs"
+                />
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  step="0.5"
+                  aria-label="Tarifa regla por hora"
+                  value={reglaPrecio}
+                  onChange={(e) => setReglaPrecio(e.target.value)}
+                  placeholder="Tarifa B/./h (ej. 12)"
+                  className="flex-1 rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddTarifaRegla}
+                  className="rounded-xl bg-[#273758] px-3 py-1.5 text-xs font-bold text-white cursor-pointer"
+                >
+                  + Agregar regla
+                </button>
+              </div>
+            </div>
+
+            {tarifaError && (
+              <p role="alert" className="text-xs font-bold text-rose-600">
+                {tarifaError}
+              </p>
+            )}
+
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setEditingTarifaCancha(null)}
+                className="flex-1 rounded-xl bg-slate-100 py-2.5 text-xs font-bold cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="flex-1 rounded-xl bg-[#B6E22E] py-2.5 text-xs font-extrabold text-[#16223B] cursor-pointer"
+              >
+                Guardar tarifas
               </button>
             </div>
           </form>

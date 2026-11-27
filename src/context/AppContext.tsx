@@ -12,6 +12,7 @@ import type {
   Reserva,
   Role,
   SkillLevel,
+  TarifaRegla,
   Usuario,
 } from '../types/tennis';
 import {
@@ -21,10 +22,11 @@ import {
   isInstructorAvailable,
   isSlotAvailable,
   joinConvocatoriaLogic,
+  validateCourtRates,
   votePlanificacionLogic,
 } from '../utils/tennisLogic';
 
-const STORAGE_KEY = 'tenis_club_panama_state_v2';
+const STORAGE_KEY = 'tenis_club_panama_state_v3';
 
 export interface ToastMessage {
   id: string;
@@ -65,6 +67,15 @@ interface AppContextValue {
   rescheduleReservation: (reservaId: string, nuevaFecha: string, nuevaHora: string) => { ok: boolean; error?: string };
   validateCheckInCode: (codigo: string) => { ok: boolean; message: string };
   toggleCourtStatus: (canchaId: string) => void;
+  updateCourtRates: (
+    canchaId: string,
+    config: {
+      precioHora: number;
+      precioNocturno?: number;
+      preciosPorDuracion?: Partial<Record<60 | 90 | 120, number>>;
+      tarifasPersonalizadas?: TarifaRegla[];
+    }
+  ) => { ok: boolean; error?: string };
   createConvocatoria: (input: {
     reservaId: string;
     titulo: string;
@@ -343,8 +354,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         cancha,
         input.horaInicio,
         input.duracionMin,
-        state.serviceFeePct
+        state.serviceFeePct,
+        false,
+        input.fecha
       );
+      if (!totals.tarifaValida || totals.totalPagado <= 0) {
+        return {
+          ok: false,
+          error: 'Esta cancha requiere una tarifa válida mayor a B/. 0.00 para confirmar la reserva.',
+        };
+      }
+      if (!input.metodoPago) {
+        return {
+          ok: false,
+          error: 'Selecciona un método de pago para confirmar la reserva.',
+        };
+      }
       const userId = input.usuarioIdOverride || state.currentUserId;
       const code = `TCP-${Math.floor(2500 + Math.random() * 7000)}`;
 
@@ -406,7 +431,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         precioCancha: totals.precioCancha,
         cargoServicio: totals.cargoServicio,
         totalPagado: totals.totalPagado,
-        metodoPago: totals.esGratuita ? 'Gratuita' : input.metodoPago,
+        metodoPago: input.metodoPago,
         pagoEstado: 'Aprobado',
         creadaEn: new Date().toISOString(),
         tipoOrigen: input.tipoOrigen || 'Jugador',
@@ -436,7 +461,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             actor: currentUser.nombre,
             rol: currentUser.rol,
             accion: 'Reserva confirmada',
-            detalle: `${code} · ${cancha.nombre} (${totals.esGratuita ? 'Gratuita' : `B/. ${totals.totalPagado.toFixed(2)}`})`,
+            detalle: `${code} · ${cancha.nombre} (${input.metodoPago} · B/. ${totals.totalPagado.toFixed(2)})`,
             sedeId: input.sedeId,
           },
           ...prev.auditoria,
@@ -608,6 +633,62 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       showToast('Estado de cancha actualizado');
     },
     [currentUser, showToast]
+  );
+
+  const updateCourtRates = useCallback(
+    (
+      canchaId: string,
+      config: {
+        precioHora: number;
+        precioNocturno?: number;
+        preciosPorDuracion?: Partial<Record<60 | 90 | 120, number>>;
+        tarifasPersonalizadas?: TarifaRegla[];
+      }
+    ): { ok: boolean; error?: string } => {
+      const cancha = state.canchas.find((c) => c.id === canchaId);
+      if (!cancha) return { ok: false, error: 'Cancha no encontrada' };
+
+      const validation = validateCourtRates(config);
+      if (!validation.valid) {
+        showToast(validation.error || 'Tarifa inválida', 'error');
+        return { ok: false, error: validation.error };
+      }
+
+      setState((prev) => ({
+        ...prev,
+        canchas: prev.canchas.map((c) =>
+          c.id === canchaId
+            ? {
+                ...c,
+                precioHora: Number(config.precioHora.toFixed(2)),
+                precioNocturno:
+                  config.precioNocturno !== undefined
+                    ? Number(config.precioNocturno.toFixed(2))
+                    : undefined,
+                preciosPorDuracion: config.preciosPorDuracion,
+                tarifasPersonalizadas: config.tarifasPersonalizadas,
+              }
+            : c
+        ),
+        auditoria: [
+          {
+            id: `aud_${Date.now()}`,
+            fecha: '2026-11-26 19:33',
+            actor: currentUser.nombre,
+            rol: currentUser.rol,
+            accion: 'Tarifa de cancha actualizada',
+            detalle: `${cancha.nombre}: base B/. ${config.precioHora.toFixed(2)}/h${
+              config.precioNocturno ? `, nocturna B/. ${config.precioNocturno.toFixed(2)}/h` : ''
+            }`,
+            sedeId: cancha.sedeId,
+          },
+          ...prev.auditoria,
+        ],
+      }));
+      showToast(`Tarifas actualizadas para ${cancha.nombre}`);
+      return { ok: true };
+    },
+    [state.canchas, currentUser, showToast]
   );
 
   const createConvocatoria = useCallback(
@@ -1439,6 +1520,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     rescheduleReservation,
     validateCheckInCode,
     toggleCourtStatus,
+    updateCourtRates,
     createConvocatoria,
     joinConvocatoria,
     approvePendingPlayer,

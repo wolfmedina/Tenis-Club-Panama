@@ -6,6 +6,7 @@ import type {
   PlanificacionGrupo,
   RankingCategory,
   Reserva,
+  TarifaRegla,
   Usuario,
 } from '../types/tennis';
 
@@ -72,14 +73,15 @@ export function isSlotAvailable(
     return { available: false, reason: `Bloqueada (${blockingEntry.motivo})` };
   }
 
-  // Check active reservations
-  const activeStatuses = new Set(['Temporal', 'Confirmada', 'En curso', 'Finalizada']);
+  // Check definitively locked reservations (locked ONLY when payment is approved)
+  const confirmedStatuses = new Set(['Confirmada', 'En curso', 'Finalizada']);
   const conflictingRes = state.reservas.find(
     (r) =>
       r.id !== excludeReservaId &&
       r.canchaId === canchaId &&
       r.fecha === fecha &&
-      activeStatuses.has(r.estado) &&
+      r.pagoEstado === 'Aprobado' &&
+      confirmedStatuses.has(r.estado) &&
       intervalsOverlap(reqStart, duracionMin, timeToMinutes(r.horaInicio), r.duracionMin)
   );
   if (conflictingRes) {
@@ -128,31 +130,181 @@ export function isInstructorAvailable(
   return { available: true };
 }
 
+export function isWeekendISO(fechaISO?: string): boolean {
+  if (!fechaISO) return false;
+  const parsed = new Date(`${fechaISO}T12:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) return false;
+  const day = parsed.getUTCDay();
+  return day === 0 || day === 6;
+}
+
+export function validateCourtRates(input: {
+  precioHora: number;
+  precioNocturno?: number;
+  preciosPorDuracion?: Partial<Record<60 | 90 | 120, number>>;
+  tarifasPersonalizadas?: TarifaRegla[];
+}): { valid: boolean; error?: string } {
+  if (!Number.isFinite(input.precioHora) || input.precioHora <= 0) {
+    return {
+      valid: false,
+      error: 'La tarifa base por hora debe ser mayor a B/. 0.00.',
+    };
+  }
+  if (
+    input.precioNocturno !== undefined &&
+    (!Number.isFinite(input.precioNocturno) || input.precioNocturno <= 0)
+  ) {
+    return {
+      valid: false,
+      error: 'La tarifa nocturna debe ser mayor a B/. 0.00.',
+    };
+  }
+  if (input.preciosPorDuracion) {
+    for (const [dur, price] of Object.entries(input.preciosPorDuracion)) {
+      if (price !== undefined && (!Number.isFinite(price) || price <= 0)) {
+        return {
+          valid: false,
+          error: `La tarifa para ${dur} min debe ser mayor a B/. 0.00.`,
+        };
+      }
+    }
+  }
+  if (input.tarifasPersonalizadas) {
+    for (const regla of input.tarifasPersonalizadas) {
+      if (!Number.isFinite(regla.precioHora) || regla.precioHora <= 0) {
+        return {
+          valid: false,
+          error: 'Todas las reglas de tarifa deben tener un monto mayor a B/. 0.00.',
+        };
+      }
+      if (timeToMinutes(regla.horaDesde) >= timeToMinutes(regla.horaHasta)) {
+        return {
+          valid: false,
+          error: 'La hora inicial de cada regla debe ser anterior a la hora final.',
+        };
+      }
+    }
+  }
+  return { valid: true };
+}
+
+export function resolveCourtRate(
+  cancha: Pick<
+    Cancha,
+    'precioHora' | 'precioNocturno' | 'preciosPorDuracion' | 'tarifasPersonalizadas'
+  >,
+  horaInicio: string,
+  duracionMin: number,
+  fecha?: string
+): {
+  ratePerHour: number;
+  fixedDurationTotal?: number;
+  tarifaValida: boolean;
+} {
+  if (!Number.isFinite(cancha.precioHora) || cancha.precioHora <= 0) {
+    return { ratePerHour: 0, tarifaValida: false };
+  }
+
+  const reqMinutes = timeToMinutes(horaInicio);
+  const weekend = isWeekendISO(fecha);
+
+  if (cancha.tarifasPersonalizadas && cancha.tarifasPersonalizadas.length > 0) {
+    const matchingRules = cancha.tarifasPersonalizadas.filter((r) => {
+      const dayMatch =
+        r.dias === 'Todos' ||
+        (r.dias === 'Fines de semana' && weekend) ||
+        (r.dias === 'Lun-Vie' && !weekend);
+      const timeMatch =
+        reqMinutes >= timeToMinutes(r.horaDesde) &&
+        reqMinutes < timeToMinutes(r.horaHasta);
+      const durMatch = r.duracionMin === undefined || r.duracionMin === duracionMin;
+      return dayMatch && timeMatch && durMatch;
+    });
+
+    if (matchingRules.length > 0) {
+      // Prioritize exact duration + specific day group match
+      const sorted = [...matchingRules].sort((a, b) => {
+        const scoreA = (a.duracionMin ? 2 : 0) + (a.dias !== 'Todos' ? 1 : 0);
+        const scoreB = (b.duracionMin ? 2 : 0) + (b.dias !== 'Todos' ? 1 : 0);
+        return scoreB - scoreA;
+      });
+      const topRule = sorted[0];
+      if (!Number.isFinite(topRule.precioHora) || topRule.precioHora <= 0) {
+        return { ratePerHour: 0, tarifaValida: false };
+      }
+      return { ratePerHour: topRule.precioHora, tarifaValida: true };
+    }
+  }
+
+  const hour = Number(horaInicio.split(':')[0] || 0);
+  if (hour >= 18 && cancha.precioNocturno !== undefined) {
+    if (!Number.isFinite(cancha.precioNocturno) || cancha.precioNocturno <= 0) {
+      return { ratePerHour: 0, tarifaValida: false };
+    }
+    return { ratePerHour: cancha.precioNocturno, tarifaValida: true };
+  }
+
+  const durKey = duracionMin as 60 | 90 | 120;
+  const fixedForDuration = cancha.preciosPorDuracion?.[durKey];
+  if (fixedForDuration !== undefined) {
+    if (!Number.isFinite(fixedForDuration) || fixedForDuration <= 0) {
+      return { ratePerHour: 0, tarifaValida: false };
+    }
+    return {
+      ratePerHour: Number((fixedForDuration / (duracionMin / 60)).toFixed(2)),
+      fixedDurationTotal: fixedForDuration,
+      tarifaValida: true,
+    };
+  }
+
+  return { ratePerHour: cancha.precioHora, tarifaValida: true };
+}
+
 export function calculateBookingTotals(
-  cancha: Pick<Cancha, 'precioHora' | 'precioNocturno'>,
+  cancha: Pick<
+    Cancha,
+    'precioHora' | 'precioNocturno' | 'preciosPorDuracion' | 'tarifasPersonalizadas'
+  >,
   horaInicio: string,
   duracionMin: number,
   serviceFeePct: number,
-  isResidentDiscount = false
-): { precioCancha: number; cargoServicio: number; totalPagado: number; esGratuita: boolean } {
-  const hour = Number(horaInicio.split(':')[0] || 0);
-  const baseRate =
-    hour >= 18 && cancha.precioNocturno !== undefined
-      ? cancha.precioNocturno
-      : cancha.precioHora;
-
-  if (baseRate <= 0) {
-    return { precioCancha: 0, cargoServicio: 0, totalPagado: 0, esGratuita: true };
+  isResidentDiscount = false,
+  fecha?: string
+): {
+  precioCancha: number;
+  cargoServicio: number;
+  totalPagado: number;
+  tarifaHoraAplicada: number;
+  tarifaValida: boolean;
+} {
+  const resolved = resolveCourtRate(cancha, horaInicio, duracionMin, fecha);
+  if (!resolved.tarifaValida || resolved.ratePerHour <= 0) {
+    return {
+      precioCancha: 0,
+      cargoServicio: 0,
+      totalPagado: 0,
+      tarifaHoraAplicada: 0,
+      tarifaValida: false,
+    };
   }
 
   const multiplier = duracionMin / 60;
-  let precioCancha = Number((baseRate * multiplier).toFixed(2));
+  let precioCancha =
+    resolved.fixedDurationTotal !== undefined
+      ? Number(resolved.fixedDurationTotal.toFixed(2))
+      : Number((resolved.ratePerHour * multiplier).toFixed(2));
   if (isResidentDiscount) {
     precioCancha = Number((precioCancha * 0.8).toFixed(2));
   }
   const cargoServicio = Number(((precioCancha * serviceFeePct) / 100).toFixed(2));
   const totalPagado = Number((precioCancha + cargoServicio).toFixed(2));
-  return { precioCancha, cargoServicio, totalPagado, esGratuita: totalPagado === 0 };
+  return {
+    precioCancha,
+    cargoServicio,
+    totalPagado,
+    tarifaHoraAplicada: resolved.ratePerHour,
+    tarifaValida: precioCancha > 0 && totalPagado > 0,
+  };
 }
 
 /**
@@ -331,7 +483,10 @@ export function computeAdminMetrics(
 ) {
   const sedeReservas = state.reservas.filter((r) => r.sedeId === sedeId && r.fecha === fecha);
   const activeReservas = sedeReservas.filter(
-    (r) => r.estado !== 'Cancelada' && r.estado !== 'Vencida' && r.pagoEstado !== 'Rechazado'
+    (r) =>
+      r.pagoEstado === 'Aprobado' &&
+      r.estado !== 'Cancelada' &&
+      r.estado !== 'Vencida'
   );
   const ingresosHoy = activeReservas.reduce((sum, r) => sum + r.precioCancha, 0);
   const sedeClases = state.clases.filter(

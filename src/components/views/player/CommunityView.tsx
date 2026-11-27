@@ -1499,9 +1499,9 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                   </span>
                   <span>
                     {available
-                      ? cancha.precioHora === 0
-                        ? 'Gratuita'
-                        : `B/. ${cancha.precioHora}/h`
+                      ? `B/. ${(cancha.precioNocturno && Number(winningOption.horaInicio.split(':')[0]) >= 18
+                          ? cancha.precioNocturno
+                          : cancha.precioHora).toFixed(2)}/h`
                       : reason}
                   </span>
                 </button>
@@ -1516,6 +1516,8 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
               >
                 <option value="Yappy">Yappy</option>
                 <option value="Tarjeta">Tarjeta de crédito/débito</option>
+                <option value="Apple Pay">Apple Pay</option>
+                <option value="PayPal">PayPal</option>
               </select>
             </div>
             {convertError && <p className="text-xs font-semibold text-rose-600">{convertError}</p>}
@@ -1545,7 +1547,7 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
                 }}
                 className="flex-1 rounded-xl bg-[#B6E22E] disabled:bg-slate-200 py-2.5 text-xs font-extrabold text-[#16223B]"
               >
-                Confirmar reserva
+                Confirmar pago y reservar
               </button>
             </div>
           </div>

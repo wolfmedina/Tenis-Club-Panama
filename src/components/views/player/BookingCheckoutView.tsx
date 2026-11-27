@@ -54,12 +54,12 @@ export const BookingCheckoutView: React.FC<BookingCheckoutViewProps> = ({
     cancha,
     selection.horaInicio,
     selection.duracionMin,
-    state.serviceFeePct
+    state.serviceFeePct,
+    false,
+    selection.fecha
   );
 
-  const [metodo, setMetodo] = useState<PaymentMethod>(
-    totals.esGratuita ? 'Gratuita' : 'Tarjeta'
-  );
+  const [metodo, setMetodo] = useState<PaymentMethod>('Tarjeta');
   const [simulateFailure, setSimulateFailure] = useState(false);
   const [playersText, setPlayersText] = useState(
     selection.modalidad === 'Dobles'
@@ -89,8 +89,8 @@ export const BookingCheckoutView: React.FC<BookingCheckoutViewProps> = ({
       duracionMin: selection.duracionMin,
       modalidad: selection.modalidad,
       participantes: participants,
-      metodoPago: totals.esGratuita ? 'Gratuita' : metodo,
-      simulateFailure: totals.esGratuita ? false : simulateFailure,
+      metodoPago: metodo,
+      simulateFailure,
     });
 
     if (!res.ok || !res.reserva) {
@@ -204,9 +204,7 @@ export const BookingCheckoutView: React.FC<BookingCheckoutViewProps> = ({
               <div className="flex justify-between pt-1 border-t border-slate-200">
                 <span className="font-bold text-[#1E2B45]">Total</span>
                 <span className="font-extrabold text-[#273758] tabular-nums">
-                  {confirmedReserva.totalPagado === 0
-                    ? 'Gratuita (B/. 0.00)'
-                    : `B/. ${confirmedReserva.totalPagado.toFixed(2)}`}
+                  {`B/. ${confirmedReserva.totalPagado.toFixed(2)}`}
                 </span>
               </div>
             </div>
@@ -351,14 +349,13 @@ export const BookingCheckoutView: React.FC<BookingCheckoutViewProps> = ({
               <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
                 <span className="text-sm font-extrabold text-[#1E2B45]">Total a pagar</span>
                 <span className="rounded-xl bg-[#B6E22E] px-3 py-1 text-sm font-extrabold text-[#16223B] tabular-nums">
-                  {totals.esGratuita ? 'Gratuita · B/. 0.00' : `B/. ${totals.totalPagado.toFixed(2)}`}
+                  {`B/. ${totals.totalPagado.toFixed(2)}`}
                 </span>
               </div>
             </div>
 
             {/* Payment Method */}
-            {!totals.esGratuita && (
-              <div className="rounded-2xl bg-white p-4 shadow-sm border border-slate-100 space-y-2.5">
+            <div className="rounded-2xl bg-white p-4 shadow-sm border border-slate-100 space-y-2.5">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-extrabold text-[#1E2B45]">Método de pago</h3>
                   <span className="text-[11px] font-bold text-[#5E8210] flex items-center gap-1">
@@ -436,7 +433,6 @@ export const BookingCheckoutView: React.FC<BookingCheckoutViewProps> = ({
                   <span>Simular rechazo bancario (prueba de liberación de bloqueo)</span>
                 </label>
               </div>
-            )}
 
             {errorMsg && (
               <div
@@ -450,15 +446,12 @@ export const BookingCheckoutView: React.FC<BookingCheckoutViewProps> = ({
 
             <button
               type="button"
+              disabled={!totals.tarifaValida}
               onClick={handleConfirmPayment}
-              className="w-full rounded-2xl bg-[#B6E22E] hover:bg-[#ACD638] py-3.5 text-base font-extrabold text-[#16223B] flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+              className="w-full rounded-2xl bg-[#B6E22E] hover:bg-[#ACD638] disabled:bg-slate-200 disabled:text-slate-400 py-3.5 text-base font-extrabold text-[#16223B] flex items-center justify-center gap-2 shadow-sm cursor-pointer"
             >
               <Lock className="w-4 h-4" />
-              <span>
-                {totals.esGratuita
-                  ? 'Confirmar reserva gratuita'
-                  : `Confirmar pago – B/. ${totals.totalPagado.toFixed(2)}`}
-              </span>
+              <span>{`Confirmar pago – B/. ${totals.totalPagado.toFixed(2)}`}</span>
             </button>
           </>
         )}

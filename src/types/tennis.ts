@@ -61,6 +61,17 @@ export interface Sede {
   activa: boolean;
 }
 
+export type DayGroup = 'Todos' | 'Lun-Vie' | 'Fines de semana';
+
+export interface TarifaRegla {
+  id: string;
+  dias: DayGroup;
+  horaDesde: string; // HH:MM
+  horaHasta: string; // HH:MM
+  duracionMin?: 60 | 90 | 120;
+  precioHora: number; // Debe ser > 0
+}
+
 export interface Cancha {
   id: string;
   sedeId: string;
@@ -68,8 +79,10 @@ export interface Cancha {
   superficie: SurfaceType;
   iluminacion: boolean;
   techada: boolean;
-  precioHora: number; // 0 = gratuita
+  precioHora: number; // Tarifa base obligatoria por hora (> 0)
   precioNocturno?: number;
+  preciosPorDuracion?: Partial<Record<60 | 90 | 120, number>>;
+  tarifasPersonalizadas?: TarifaRegla[];
   capacidadMax: number;
   estado: 'Disponible' | 'Bloqueada' | 'Mantenimiento';
   motivoBloqueo?: string;
@@ -91,7 +104,7 @@ export type PagoEstado =
   | 'Devolución pendiente'
   | 'Devuelto';
 
-export type PaymentMethod = 'Tarjeta' | 'Yappy' | 'Apple Pay' | 'PayPal' | 'Gratuita';
+export type PaymentMethod = 'Tarjeta' | 'Yappy' | 'Apple Pay' | 'PayPal';
 
 export interface Reserva {
   id: string;

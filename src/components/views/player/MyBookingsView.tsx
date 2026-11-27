@@ -170,7 +170,7 @@ export const MyBookingsView: React.FC<MyBookingsViewProps> = ({
                   </div>
                   <div className="text-right shrink-0">
                     <span className="text-sm font-extrabold text-[#273758] tabular-nums block">
-                      {res.totalPagado === 0 ? 'Gratuita' : `B/. ${res.totalPagado.toFixed(2)}`}
+                      {`B/. ${res.totalPagado.toFixed(2)}`}
                     </span>
                     <span className="text-[10.5px] font-semibold text-slate-500">
                       {res.pagoEstado}
@@ -263,7 +263,7 @@ export const MyBookingsView: React.FC<MyBookingsViewProps> = ({
                       </div>
                       <p className="text-[11px] text-slate-500 pt-0.5 flex items-center gap-1">
                         <CheckCircle2 className="w-3.5 h-3.5 text-[#5E8210]" />
-                        Política: cancelación gratuita hasta {sede?.politicaCancelacionHoras || 12} h antes.
+                        Política: cancelación sin penalidad hasta {sede?.politicaCancelacionHoras || 12} h antes.
                       </p>
                     </div>
                   </div>

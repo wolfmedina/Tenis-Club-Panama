@@ -8,6 +8,7 @@ import {
   isInstructorAvailable,
   isSlotAvailable,
   joinConvocatoriaLogic,
+  validateCourtRates,
   votePlanificacionLogic,
 } from './tennisLogic';
 import type {
@@ -24,7 +25,7 @@ import type {
 const sampleCourt: Cancha = {
   id: 'c1',
   sedeId: 's1',
-  nombre: 'Cancha 1',
+  nombre: 'Cancha Privada 1',
   superficie: 'Dura (Hard Court)',
   iluminacion: true,
   techada: false,
@@ -34,24 +35,97 @@ const sampleCourt: Cancha = {
   estado: 'Disponible',
 };
 
-const sampleFreeCourt: Cancha = {
+const samplePublicCourt: Cancha = {
   ...sampleCourt,
   id: 'c2',
-  nombre: 'Cancha Pública Gratuita',
-  precioHora: 0,
-  precioNocturno: 0,
+  nombre: 'Cancha Municipal 1',
+  precioHora: 8,
+  precioNocturno: 12,
 };
 
-test('P1: free and paid booking totals & overlap prevention', () => {
-  const free = calculateBookingTotals(sampleFreeCourt, '09:00', 60, 5);
-  assert.equal(free.esGratuita, true);
-  assert.equal(free.totalPagado, 0);
+test('P1: mandatory paid booking totals, rate validation, custom rules & payment-confirmed slot lock', () => {
+  const invalidZeroCourt: Cancha = { ...samplePublicCourt, precioHora: 0, precioNocturno: 0 };
+  const invalidTotals = calculateBookingTotals(invalidZeroCourt, '09:00', 60, 5);
+  assert.equal(invalidTotals.tarifaValida, false);
+  assert.equal(invalidTotals.totalPagado, 0);
 
-  const paid = calculateBookingTotals(sampleCourt, '18:00', 90, 5);
-  assert.equal(paid.esGratuita, false);
+  assert.equal(validateCourtRates({ precioHora: 0 }).valid, false);
+  assert.equal(validateCourtRates({ precioHora: -5 }).valid, false);
+  assert.equal(validateCourtRates({ precioHora: 10, precioNocturno: 0 }).valid, false);
+  assert.equal(
+    validateCourtRates({
+      precioHora: 10,
+      tarifasPersonalizadas: [
+        { id: 't1', dias: 'Fines de semana', horaDesde: '18:00', horaHasta: '21:00', precioHora: 0 },
+      ],
+    }).valid,
+    false
+  );
+  assert.equal(validateCourtRates({ precioHora: 8, precioNocturno: 12 }).valid, true);
+
+  const publicDay = calculateBookingTotals(samplePublicCourt, '09:00', 60, 5, false, '2026-11-27');
+  assert.equal(publicDay.tarifaValida, true);
+  assert.equal(publicDay.precioCancha, 8);
+  assert.equal(publicDay.cargoServicio, 0.4);
+  assert.equal(publicDay.totalPagado, 8.4);
+
+  const paid = calculateBookingTotals(sampleCourt, '18:00', 90, 5, false, '2026-11-27');
+  assert.equal(paid.tarifaValida, true);
   assert.equal(paid.precioCancha, 45);
   assert.equal(paid.cargoServicio, 2.25);
   assert.equal(paid.totalPagado, 47.25);
+
+  // Custom rule by day + schedule + duration overrides base/nocturnal rate
+  const customCourt: Cancha = {
+    ...samplePublicCourt,
+    preciosPorDuracion: { 90: 11 },
+    tarifasPersonalizadas: [
+      {
+        id: 'rule_wknd',
+        dias: 'Fines de semana',
+        horaDesde: '18:00',
+        horaHasta: '22:00',
+        duracionMin: 60,
+        precioHora: 12,
+      },
+    ],
+  };
+  // 2026-11-28 is Saturday
+  const weekendRule = calculateBookingTotals(customCourt, '18:00', 60, 5, false, '2026-11-28');
+  assert.equal(weekendRule.tarifaHoraAplicada, 12);
+  assert.equal(weekendRule.precioCancha, 12);
+  // Weekday 90 min daytime uses preciosPorDuracion[90]
+  const weekdayDuration = calculateBookingTotals(customCourt, '09:00', 90, 5, false, '2026-11-27');
+  assert.equal(weekdayDuration.precioCancha, 11);
+
+  const unpaidOrRejected: Reserva[] = [
+    {
+      id: 'r_temp',
+      codigo: 'TCP-100',
+      sedeId: 's1',
+      canchaId: 'c1',
+      usuarioId: 'u1',
+      fecha: '2026-11-27',
+      horaInicio: '15:00',
+      duracionMin: 60,
+      modalidad: 'Individual',
+      participantes: ['Julio Solórzano'],
+      estado: 'Temporal',
+      asistenciaValidada: false,
+      precioCancha: 25,
+      cargoServicio: 1.25,
+      totalPagado: 26.25,
+      metodoPago: 'Tarjeta',
+      pagoEstado: 'Pendiente',
+      creadaEn: '2026-11-26',
+      tipoOrigen: 'Jugador',
+    },
+  ];
+  // Unconfirmed/unpaid reservation must NOT definitively lock the slot
+  assert.equal(
+    isSlotAvailable({ canchas: [sampleCourt], reservas: unpaidOrRejected, bloqueos: [], clases: [] }, 'c1', '2026-11-27', '15:00', 60).available,
+    true
+  );
 
   const reservas: Reserva[] = [
     {
@@ -64,7 +138,7 @@ test('P1: free and paid booking totals & overlap prevention', () => {
       horaInicio: '18:00',
       duracionMin: 90,
       modalidad: 'Dobles',
-      participantes: ['Carlos'],
+      participantes: ['Julio Solórzano'],
       estado: 'Confirmada',
       asistenciaValidada: false,
       precioCancha: 45,
@@ -77,7 +151,7 @@ test('P1: free and paid booking totals & overlap prevention', () => {
     },
   ];
 
-  // Exact overlap blocked
+  // Exact overlap blocked when payment is confirmed
   assert.equal(
     isSlotAvailable({ canchas: [sampleCourt], reservas, bloqueos: [], clases: [] }, 'c1', '2026-11-27', '18:00', 60)
       .available,

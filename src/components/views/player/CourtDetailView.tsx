@@ -88,9 +88,17 @@ export const CourtDetailView: React.FC<CourtDetailViewProps> = ({
         selectedCancha,
         activeTime || '09:00',
         duracionMin,
-        state.serviceFeePct
+        state.serviceFeePct,
+        false,
+        selectedDate
       )
-    : { precioCancha: 0, cargoServicio: 0, totalPagado: 0, esGratuita: true };
+    : {
+        precioCancha: 0,
+        cargoServicio: 0,
+        totalPagado: 0,
+        tarifaHoraAplicada: 0,
+        tarifaValida: false,
+      };
 
   const amenityIcons = [
     { icon: Lightbulb, label: 'Iluminación LED' },
@@ -242,9 +250,7 @@ export const CourtDetailView: React.FC<CourtDetailViewProps> = ({
               <div>
                 <span className="block text-[10px] text-slate-500">Precio/hora</span>
                 <span className="block font-extrabold text-[#1E2B45] tabular-nums">
-                  {selectedCancha.precioHora === 0
-                    ? 'Gratuita'
-                    : `B/. ${selectedCancha.precioHora.toFixed(2)}`}
+                  {`B/. ${(previewPrice.tarifaHoraAplicada || selectedCancha.precioHora).toFixed(2)}`}
                 </span>
               </div>
             </div>
@@ -378,12 +384,12 @@ export const CourtDetailView: React.FC<CourtDetailViewProps> = ({
               Total estimado ({duracionMin} min)
             </span>
             <span className="text-base font-extrabold text-[#273758] tabular-nums">
-              {previewPrice.esGratuita ? 'Gratuita (B/. 0.00)' : `B/. ${previewPrice.totalPagado.toFixed(2)}`}
+              {`B/. ${previewPrice.totalPagado.toFixed(2)}`}
             </span>
           </div>
           <button
             type="button"
-            disabled={!activeTime || !selectedCancha || selectedCancha.estado !== 'Disponible'}
+            disabled={!activeTime || !selectedCancha || selectedCancha.estado !== 'Disponible' || !previewPrice.tarifaValida}
             onClick={() => {
               if (!selectedCancha || !activeTime) return;
               onProceedCheckout({
